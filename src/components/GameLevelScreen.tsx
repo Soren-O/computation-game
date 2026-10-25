@@ -5,7 +5,7 @@ import HypercubeStage from './level/HypercubeStage';
 import CircuitPanel, { type CaseTab, type Hand } from './level/CircuitPanel';
 import { StageToggles, TransportControls } from './level/TransportBar';
 import { CELL_INFO } from './level/cells';
-import { activeColumnAt, runDuration, stageFrame } from '../game/animation';
+import { activeColumnAt, gateMarks, runDuration, stageFrame } from '../game/animation';
 import { QUBIT_COLORS, defaultView, type View } from '../game/hypercube';
 import {
   ALL_CELLS,
@@ -59,7 +59,7 @@ interface Flash {
 }
 
 const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }) => {
-  const { markLevelComplete } = useGame();
+  const { markLevelComplete, settings } = useGame();
   const isSandboxLevel = level.id === SANDBOX_LEVEL_ID;
   const tutorial = TUTORIALS[level.id] ?? null;
   const classical = level.visual === 'bit';
@@ -338,6 +338,14 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
   const frame = useMemo(() => stageFrame(initialState, circuit, time), [initialState, circuit, time]);
   const target = !isSandboxLevel && mode === 'PUZZLE' ? currentCase.target : null;
   const active = activeColumnAt(time, circuit.length);
+  const activeIndex = active?.index ?? null;
+  const marks = useMemo(
+    () => (activeIndex === null ? null : gateMarks(qubits, circuit[activeIndex])),
+    [activeIndex, circuit, qubits],
+  );
+  // Fade the marks in as a column starts and out as it ends.
+  const marksOpacity = active ? Math.max(0, Math.min(1, active.progress / 0.08, (1 - active.progress) / 0.12)) : 0;
+  const prefersReducedMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const activeAxes = active
     ? circuit[active.index].flatMap((cell, q) => (isGate(cell) || cell === 'SWAP' ? [q] : []))
     : [];
@@ -457,6 +465,9 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
             onViewChange={setView}
             onPickStart={mode === 'SANDBOX' ? pickStart : undefined}
             celebrate={celebrate}
+            marks={marks}
+            marksOpacity={marksOpacity}
+            animateMarks={!settings.reduceMotion && !prefersReducedMotion}
           />
           {/* Axis legend */}
           {qubits > 1 && (

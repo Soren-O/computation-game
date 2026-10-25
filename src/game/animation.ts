@@ -11,6 +11,8 @@
 
 import {
   EPS,
+  GATE_MATRIX,
+  isGate,
   applyCircuit,
   applyColumn,
   cAbs,
@@ -20,6 +22,7 @@ import {
   cPolar,
   columnMatrix,
   numQubits,
+  type CellId,
   type Circuit,
   type Column,
   type Complex,
@@ -109,6 +112,80 @@ const restingArrows = (state: QState): ArrowSprite[] =>
   state.flatMap((amp, v) =>
     cAbs(amp) < EPS ? [] : [{ key: `rest-${v}`, from: v, to: v, travel: 1, offset: { re: 0, im: 0 }, value: amp, opacity: 1, kind: 'sum' as const }],
   );
+
+// --- What a gate does, independent of the state: lanes and spins ---
+
+/** Amplitude moving from corner `from` to `to`, multiplied by e^(i·turn) on the way. */
+export interface Lane {
+  from: number;
+  to: number;
+  turn: number;
+  gate: CellId;
+}
+
+/** Amplitude staying at corner `at`, turned in place by `turn` radians (counterclockwise positive). */
+export interface Spin {
+  at: number;
+  turn: number;
+  gate: CellId;
+}
+
+export interface GateMarks {
+  lanes: Lane[];
+  spins: Spin[];
+}
+
+/** Angle in (-π, π], with a half turn reported as +π. */
+const wrapTurn = (a: number) => {
+  let x = Math.atan2(Math.sin(a), Math.cos(a));
+  if (x <= -Math.PI + 1e-9) x = Math.PI;
+  return Math.abs(x) < 1e-9 ? 0 : x;
+};
+
+/**
+ * Reads a column's matrix gate by gate: each off-diagonal entry is a lane along
+ * that gate's wire, each diagonal entry with a phase is a spin. Only corners
+ * where every control dot is 1 are marked, so a CNOT marks half the square.
+ */
+export function gateMarks(n: number, column: Column): GateMarks {
+  let controlMask = 0;
+  column.forEach((cell, q) => {
+    if (cell === 'CTRL') controlMask |= 1 << q;
+  });
+  const size = 1 << n;
+  const lanes: Lane[] = [];
+  const spinAt = new Map<number, Spin>();
+  const addSpin = (at: number, turn: number, gate: CellId) => {
+    const prev = spinAt.get(at);
+    spinAt.set(at, { at, turn: (prev?.turn ?? 0) + turn, gate: prev?.gate ?? gate });
+  };
+
+  column.forEach((cell, k) => {
+    if (!isGate(cell)) return;
+    const [m00, m01, m10, m11] = GATE_MATRIX[cell];
+    const bit = 1 << k;
+    for (let a = 0; a < size; a++) {
+      if (a & bit || (a & controlMask) !== controlMask) continue;
+      const b = a | bit;
+      if (cAbs(m10) > EPS) lanes.push({ from: a, to: b, turn: wrapTurn(cArg(m10)), gate: cell });
+      if (cAbs(m01) > EPS) lanes.push({ from: b, to: a, turn: wrapTurn(cArg(m01)), gate: cell });
+      if (cAbs(m00) > EPS && wrapTurn(cArg(m00)) !== 0) addSpin(a, cArg(m00), cell);
+      if (cAbs(m11) > EPS && wrapTurn(cArg(m11)) !== 0) addSpin(b, cArg(m11), cell);
+    }
+  });
+
+  const swaps = column.flatMap((cell, q) => (cell === 'SWAP' ? [q] : []));
+  if (swaps.length === 2) {
+    const [j, k] = swaps;
+    for (let x = 0; x < size; x++) {
+      if ((x & controlMask) !== controlMask || ((x >> j) & 1) === ((x >> k) & 1)) continue;
+      lanes.push({ from: x, to: x ^ ((1 << j) | (1 << k)), turn: 0, gate: 'SWAP' });
+    }
+  }
+
+  const spins = [...spinAt.values()].map(s => ({ ...s, turn: wrapTurn(s.turn) })).filter(s => s.turn !== 0);
+  return { lanes, spins };
+}
 
 export function stageFrame(start: QState, c: Circuit, t: number): StageFrame {
   const columns = c.length;

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import type { StageFrame } from '../../game/animation';
+import type { GateMarks, StageFrame } from '../../game/animation';
+import GateMarksLayer from './GateMarksLayer';
 import { QUBIT_COLORS, defaultView, layoutHypercube, type View } from '../../game/hypercube';
 import { EPS, cAbs, formatAmplitude, indexToBits, type Complex, type QState } from '../../game/quantum';
 
@@ -17,6 +18,11 @@ interface HypercubeStageProps {
   onPickStart?: (index: number) => void;
   /** Briefly celebrate a solved puzzle. */
   celebrate: boolean;
+  /** What the playing column does: walkways and turn arrows. */
+  marks: GateMarks | null;
+  marksOpacity: number;
+  /** False keeps the marks still (reduce-motion). */
+  animateMarks: boolean;
 }
 
 interface Size {
@@ -47,7 +53,7 @@ function Arrow({ x, y, v, unit, color, opacity, width }: { x: number; y: number;
   );
 }
 
-const HypercubeStage = ({ qubits, visual, frame, target, activeAxes, view, onViewChange, onPickStart, celebrate }: HypercubeStageProps) => {
+const HypercubeStage = ({ qubits, visual, frame, target, activeAxes, view, onViewChange, onPickStart, celebrate, marks, marksOpacity, animateMarks }: HypercubeStageProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
   const [hovered, setHovered] = useState<number | null>(null);
@@ -248,6 +254,9 @@ const HypercubeStage = ({ qubits, visual, frame, target, activeAxes, view, onVie
             </g>
           );
         })}
+
+        {/* What the playing gate does */}
+        {marks && <GateMarksLayer marks={marks} points={points} radius={radius} opacity={marksOpacity} animate={animateMarks} />}
 
         {/* Amplitudes: arrows (qubit) or balls (bit) */}
         <g filter="url(#hc-glow)" pointerEvents="none">

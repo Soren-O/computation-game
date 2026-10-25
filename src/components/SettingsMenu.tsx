@@ -217,7 +217,13 @@ const PatchNotesPanel = () => (
   <div className="animate-in slide-in-from-right-4 fade-in duration-300">
     <Header title="System Updates" subtitle="Changelog of recent quantum stability patches." />
     <div className="mt-6 space-y-6">
-      <PatchItem version={`v${APP_VERSION}`} date="2026-10-24" current>
+      <PatchItem version={`v${APP_VERSION}`} date="2026-10-25" current>
+        <ul className="list-disc list-inside space-y-2 text-gray-400">
+          <li>Gates show what they do while they play. Amplitude that moves gets a walkway of marching arrows between the circles; amplitude that turns gets arrows around its circle (two for a half turn, four for a quarter, eight for an eighth); amplitude that does both gets a walkway with a little spinner and its factor, like ×i.</li>
+          <li>The marks come straight from each gate's matrix, so a controlled gate only marks the half of the shape where its control is 1.</li>
+        </ul>
+      </PatchItem>
+      <PatchItem version="v3.0.0" date="2026-10-24">
         <ul className="list-disc list-inside space-y-2 text-gray-400">
           <li>Up to three qubits. Every basis state is a circle on one hypercube: a line, a square, then a cube. Each wire is one direction of the shape, and a gate slides amplitude along it.</li>
           <li>Amplitudes are arrows, drawn as the complex numbers they are, with probability as the disk's area. When pieces of amplitude meet they add head-to-tail, so interference is visible.</li>

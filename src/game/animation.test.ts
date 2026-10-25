@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHAIN_END, TRAVEL_END, activeColumnAt, contributions, runDuration, stageFrame } from './animation';
+import { CHAIN_END, TRAVEL_END, activeColumnAt, contributions, gateMarks, runDuration, stageFrame } from './animation';
 import { applyColumn, cAbs, cAdd, circuit, ket, parseColumn, statesMatch, superpose, uniform, type Complex, type QState } from './quantum';
 import { hypercubeEdges, layoutHypercube, defaultView } from './hypercube';
 
@@ -115,5 +115,46 @@ describe('hypercube layout', () => {
     const [p00, p10, p01] = [layout.points[0], layout.points[1], layout.points[2]];
     expect(p10.x).toBeGreaterThan(p00.x);
     expect(p01.y).toBeLessThan(p00.y);
+  });
+});
+
+describe('gateMarks', () => {
+  const q = Math.PI / 2;
+  const marks = (n: number, spec: string) => gateMarks(n, parseColumn(spec));
+
+  it('gives X a two-way walkway and no rotation', () => {
+    const m = marks(1, 'X');
+    expect(m.lanes).toEqual([{ from: 0, to: 1, turn: 0, gate: 'X' }, { from: 1, to: 0, turn: 0, gate: 'X' }]);
+    expect(m.spins).toEqual([]);
+  });
+
+  it('gives Y a walkway that turns +90° one way and -90° the other', () => {
+    const m = marks(1, 'Y');
+    expect(m.lanes.map(l => [l.from, l.to, l.turn])).toEqual([[0, 1, q], [1, 0, -q]]);
+    expect(m.spins).toEqual([]);
+  });
+
+  it('gives phase gates a spin on the 1 side only', () => {
+    expect(marks(1, 'Z')).toEqual({ lanes: [], spins: [{ at: 1, turn: Math.PI, gate: 'Z' }] });
+    expect(marks(1, 'S').spins[0].turn).toBeCloseTo(q);
+    expect(marks(1, 's').spins[0].turn).toBeCloseTo(-q);
+    expect(marks(1, 'T').spins[0].turn).toBeCloseTo(Math.PI / 4);
+  });
+
+  it('gives H a two-way walkway plus a half turn for the piece that stays on the 1 side', () => {
+    const m = marks(1, 'H');
+    expect(m.lanes.map(l => [l.from, l.to, l.turn])).toEqual([[0, 1, 0], [1, 0, 0]]);
+    expect(m.spins).toEqual([{ at: 1, turn: Math.PI, gate: 'H' }]);
+  });
+
+  it('only marks the half where the control is 1', () => {
+    const m = marks(2, '@X'); // |10⟩ (index 1) <-> |11⟩ (index 3)
+    expect(m.lanes.map(l => [l.from, l.to])).toEqual([[1, 3], [3, 1]]);
+  });
+
+  it('marks SWAP across the diagonal and nets out phases that cancel', () => {
+    expect(marks(2, '##').lanes.map(l => [l.from, l.to])).toEqual([[1, 2], [2, 1]]);
+    const zz = marks(2, 'ZZ').spins.map(s => s.at).sort();
+    expect(zz).toEqual([1, 2]); // |11⟩ gets (-1)(-1) = +1: no spin
   });
 });
