@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CHAIN_END, TRAVEL_END, activeColumnAt, contributions, runDuration, stageFrame } from './animation';
 import { applyColumn, cAbs, cAdd, circuit, ket, parseColumn, statesMatch, superpose, uniform, type Complex, type QState } from './quantum';
-import { hypercubeEdges, layoutHypercube, DEFAULT_VIEW } from './hypercube';
+import { hypercubeEdges, layoutHypercube, defaultView } from './hypercube';
 
 /** Sum of resting/merged arrows per corner, as a state. */
 function restingState(arrows: ReturnType<typeof stageFrame>['arrows'], size: number): QState {
@@ -75,7 +75,7 @@ describe('hypercube layout', () => {
 
   it.each([1, 2, 3, 4])('fits inside the stage (%i qubits)', n => {
     for (const [w, h] of [[900, 500], [360, 420]]) {
-      const layout = layoutHypercube(n, DEFAULT_VIEW, w, h);
+      const layout = layoutHypercube(n, defaultView(n), w, h);
       for (const p of layout.points) {
         expect(p.x - layout.radius * p.scale).toBeGreaterThanOrEqual(0);
         expect(p.x + layout.radius * p.scale).toBeLessThanOrEqual(w);
@@ -85,8 +85,33 @@ describe('hypercube layout', () => {
     }
   });
 
+  it.each([1, 2, 3, 4])('keeps every circle apart at the default view (%i qubits)', n => {
+    const { points, radius } = layoutHypercube(n, defaultView(n), 900, 520);
+    for (let a = 0; a < points.length; a++)
+      for (let b = a + 1; b < points.length; b++) {
+        const gap = Math.hypot(points[a].x - points[b].x, points[a].y - points[b].y);
+        expect(gap).toBeGreaterThan(radius * (points[a].scale + points[b].scale));
+      }
+  });
+
+  it('draws four qubits as one tesseract: the q3 = 1 cube sits inside the q3 = 0 cube', () => {
+    const { points } = layoutHypercube(4, defaultView(4), 900, 520);
+    const outer = points.filter((_, v) => !(v & 8));
+    const inner = points.filter((_, v) => v & 8);
+    const mean = (ps: typeof points) => ({ x: ps.reduce((s, p) => s + p.x, 0) / ps.length, y: ps.reduce((s, p) => s + p.y, 0) / ps.length });
+    const [mo, mi] = [mean(outer), mean(inner)];
+    expect(Math.hypot(mo.x - mi.x, mo.y - mi.y)).toBeLessThan(5);
+    const xs = outer.map(p => p.x), ys = outer.map(p => p.y);
+    for (const p of inner) {
+      expect(p.x).toBeGreaterThan(Math.min(...xs));
+      expect(p.x).toBeLessThan(Math.max(...xs));
+      expect(p.y).toBeGreaterThan(Math.min(...ys));
+      expect(p.y).toBeLessThan(Math.max(...ys));
+    }
+  });
+
   it('puts qubit 0 left to right and qubit 1 bottom to top', () => {
-    const layout = layoutHypercube(2, DEFAULT_VIEW, 800, 600);
+    const layout = layoutHypercube(2, defaultView(2), 800, 600);
     const [p00, p10, p01] = [layout.points[0], layout.points[1], layout.points[2]];
     expect(p10.x).toBeGreaterThan(p00.x);
     expect(p01.y).toBeLessThan(p00.y);

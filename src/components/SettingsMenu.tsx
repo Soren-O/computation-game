@@ -219,11 +219,11 @@ const PatchNotesPanel = () => (
     <div className="mt-6 space-y-6">
       <PatchItem version={`v${APP_VERSION}`} date="2026-10-24" current>
         <ul className="list-disc list-inside space-y-2 text-gray-400">
-          <li>Up to four qubits. The states sit on the corners of a hypercube: a line, a square, a cube, and two cubes. Each wire is one direction of the shape.</li>
+          <li>Up to three qubits. Every basis state is a circle on one hypercube: a line, a square, then a cube. Each wire is one direction of the shape, and a gate slides amplitude along it.</li>
           <li>Amplitudes are arrows, drawn as the complex numbers they are, with probability as the disk's area. When pieces of amplitude meet they add head-to-tail, so interference is visible.</li>
           <li>A full circuit editor: control dots, SWAP, H, S, T and their inverses, gates in parallel, and a timeline you can scrub and loop.</li>
-          <li>Eight new levels (41 new puzzles): Binary Basis, Logic Gates, Binary Counter, Superposition, Entanglement, Interference, Quantum Cube and Tesseract.</li>
-          <li>Truth-table puzzles for classical logic, dashed ghost arrows for the goal, and a Sandbox with up to four qubits.</li>
+          <li>Seven new levels (36 new puzzles): Binary Basis, Logic Gates, Binary Counter, Superposition, Entanglement, Interference and Quantum Cube.</li>
+          <li>Truth-table puzzles for classical logic, dashed ghost arrows for the goal, and a Sandbox with up to three qubits.</li>
         </ul>
       </PatchItem>
       <PatchItem version="v2.6.0" date="2026-10-24">

@@ -22,7 +22,7 @@ export const ARCHIVE_DATA: ArchiveEntry[] = [
     category: 'MECHANIC',
     description: 'Why the states sit on a cube.',
     content:
-      'n bits have 2ⁿ possible values, and each value is drawn as a circle at a corner of an n-dimensional cube. One bit is two circles joined by a line. Two bits: that line slides over to a second line, making a square. Three bits: the square slides back to a second square, making a cube. Four bits: the cube slides over to a second cube. Every wire in the circuit is one direction of the cube (the edges share the wire\'s colour), so a gate on a wire moves amplitude along that direction only. Symmetries of the circuit become symmetries of the shape: X on a wire reflects the cube across that axis, SWAP mirrors it across a diagonal, and a controlled gate moves only the half of the cube where the control is 1.',
+      'n bits have 2ⁿ possible values, and each value is drawn as a circle at a corner of one n-dimensional cube: two circles on a line for one bit, a square for two, a cube for three. (Four bits would need a tesseract, which has no clean symmetric drawing, so the simulation stops at three.) The shape never moves; what changes over time is the amplitude on it. Every wire in the circuit is one direction of the shape (the edges share the wire\'s colour), and a gate on a wire moves amplitude along that direction only. Watched over time, X on the first bit looks like a circle sliding to the other circle; on two bits, a line sliding onto the opposite line; on three, a square onto the opposite square. Symmetries of the circuit become symmetries of the shape: X on a wire reflects the cube across that axis, SWAP mirrors it across a diagonal, and a controlled gate moves only the half of the cube where the control is 1.',
     icon: Box,
   },
   {
@@ -67,7 +67,7 @@ export const ARCHIVE_DATA: ArchiveEntry[] = [
     category: 'SCIENCE',
     description: 'Every amplitude, drawn as an arrow.',
     content:
-      'The state vector lists one complex amplitude per basis state: 2 for one qubit, 16 for four. Here each amplitude is drawn as an arrow in its own circle. The arrow is the complex number itself, drawn in the complex plane: pointing right is +1, up is +i, left is -1, down is -i. Because the arrows are honest complex numbers, adding amplitudes is adding arrows head-to-tail, which is exactly what you see when pieces of amplitude meet.',
+      'The state vector lists one complex amplitude per basis state: 2 for one qubit, 8 for three. Here each amplitude is drawn as an arrow in its own circle. The arrow is the complex number itself, drawn in the complex plane: pointing right is +1, up is +i, left is -1, down is -i. Because the arrows are honest complex numbers, adding amplitudes is adding arrows head-to-tail, which is exactly what you see when pieces of amplitude meet.',
     icon: MoveUpRight,
   },
   {
@@ -258,7 +258,7 @@ export const ARCHIVE_DATA: ArchiveEntry[] = [
     content:
       'Project Odyssey was initiated in 2042 following the Great Silicon Collapse. The goal: create a human-quantum interface capable of stabilizing high-coherence qubit arrays via direct neural link.',
     icon: Database,
-    unlockedBy: 'q6',
+    unlockedBy: 'q5',
   },
   {
     id: '005',

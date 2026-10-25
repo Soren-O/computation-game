@@ -149,7 +149,7 @@ const Q2_TUTORIAL: TutorialStep[] = [
 const C1_TUTORIAL: TutorialStep[] = [
   {
     puzzle: 0,
-    text: <>Two bits have four combinations, so the one-bit line slides over to a second line and makes a square (see <Term id="018">the hypercube</Term>). Each wire is a direction: the first wire (q0) moves the ball left–right. Labels list the bits in wire order, |q0 q1⟩. Reach |10⟩.</>,
+    text: <>Two bits have four combinations, so there are four circles, on the corners of a square (see <Term id="018">the hypercube</Term>). Each wire is one direction of the square: the first wire (q0) moves the ball left–right. Labels list the bits in wire order, |q0 q1⟩. Reach |10⟩.</>,
     awaitsSolve: true,
   },
   { puzzle: 1, text: <>The second wire (q1) moves the ball bottom-to-top. Reach |01⟩.</>, awaitsSolve: true },
@@ -159,7 +159,7 @@ const C1_TUTORIAL: TutorialStep[] = [
 ];
 
 const C2_TUTORIAL: TutorialStep[] = [
-  { puzzle: 0, text: <>Three bits: the square slides back to a second square and makes a cube. q2 moves the ball front-to-back. Drag to rotate the cube. Reach the far corner, |111⟩, in one step.</>, awaitsSolve: true },
+  { puzzle: 0, text: <>Three bits: eight circles on the corners of a cube. q2 is the third direction, front-to-back. Drag to rotate the cube. Reach the far corner, |111⟩, in one step.</>, awaitsSolve: true },
   {
     puzzle: 1,
     text: <>A <Term id="015">control dot</Term> (●) makes the other gates in its column act only when its wire is 1. This puzzle has two inputs, shown as tabs above the timeline; both must end right. Copy q0 into q1.</>,
@@ -171,10 +171,10 @@ const C2_TUTORIAL: TutorialStep[] = [
 ];
 
 const C3_TUTORIAL: TutorialStep[] = [
-  { puzzle: 0, text: <>Four bits: the whole cube slides over to a second cube. q3 jumps the ball from one cube to the other. Reach |0001⟩.</>, awaitsSolve: true },
-  { puzzle: 1, text: <>The opposite corner of the tesseract, |1111⟩, in one step.</>, awaitsSolve: true },
-  { puzzle: 2, text: <>Counting in binary: q0 is the 1s bit and q1 the 2s bit, so |10⟩ is 1 and |01⟩ is 2. Build +1 (wrapping 3 back to 0) that works for every input tab.</>, awaitsSolve: true },
-  { puzzle: 3, text: <>A full 4-bit counter: +1 for every input, with 15 wrapping to 0. A bit flips when all the bits below it are 1, so carry from the top down.</>, awaitsSolve: true },
+  { puzzle: 0, text: <>Counting in binary: q0 is the 1s bit and q1 the 2s bit, so |10⟩ is 1 and |01⟩ is 2. Build +1 (wrapping 3 back to 0) that works for every input tab.</>, awaitsSolve: true },
+  { puzzle: 1, text: <>Three bits count to 7: q0 is 1s, q1 is 2s, q2 is 4s. Add 2 (wrapping past 7). Adding 2 never touches the 1s bit, so it's the two-bit counter again, one face over.</>, awaitsSolve: true },
+  { puzzle: 2, text: <>A full 3-bit counter: +1 for every input, with 7 wrapping to 0. A bit flips when all the bits below it are 1, so carry from the top down.</>, awaitsSolve: true },
+  { puzzle: 3, text: <>Now count down: -1, with 0 wrapping to 7. Every gate here is its own inverse, so undoing a circuit means running it backwards.</>, awaitsSolve: true },
 ];
 
 const Q3_TUTORIAL: TutorialStep[] = [
@@ -217,14 +217,6 @@ const Q5_TUTORIAL: TutorialStep[] = [
   { puzzle: 4, text: <>Spread over the cube with each arrow's sign set by parity: <Dir>right</Dir> for an even number of 1s, <Dir>left</Dir> for odd.</>, awaitsSolve: true },
 ];
 
-const Q6_TUTORIAL: TutorialStep[] = [
-  { puzzle: 0, text: <>Four qubits: the cube slides to a second cube. Split the arrow between the two cubes using q3 alone.</>, awaitsSolve: true },
-  { puzzle: 1, text: <>All sixteen corners, evenly, in one step.</>, awaitsSolve: true },
-  { puzzle: 2, text: <>Four-qubit GHZ: (|0000⟩ + |1111⟩)/√2, across the longest diagonal of the tesseract.</>, awaitsSolve: true },
-  { puzzle: 3, text: <>Parity signs on all sixteen corners: <Dir>right</Dir> for an even number of 1s, <Dir>left</Dir> for odd.</>, awaitsSolve: true },
-  { puzzle: 4, text: <>Two separate Bell pairs, (q0, q1) and (q2, q3): four corners, each 1/2 long.</>, awaitsSolve: true },
-];
-
 export const TUTORIALS: Record<string, TutorialStep[]> = {
   root: ROOT_TUTORIAL,
   q1: Q1_TUTORIAL,
@@ -232,7 +224,6 @@ export const TUTORIALS: Record<string, TutorialStep[]> = {
   q3: Q3_TUTORIAL,
   q4: Q4_TUTORIAL,
   q5: Q5_TUTORIAL,
-  q6: Q6_TUTORIAL,
   c1: C1_TUTORIAL,
   c2: C2_TUTORIAL,
   c3: C3_TUTORIAL,

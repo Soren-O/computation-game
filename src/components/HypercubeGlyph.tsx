@@ -1,8 +1,8 @@
-import { DEFAULT_VIEW, layoutHypercube } from '../game/hypercube';
+import { defaultView, layoutHypercube } from '../game/hypercube';
 
-/** A tiny drawing of the n-qubit shape: two dots, a square, a cube, or two cubes. */
+/** A tiny drawing of the n-qubit shape: a line, a square, a cube, or a cube inside a cube. */
 const HypercubeGlyph = ({ qubits, size = 34, color = 'currentColor' }: { qubits: number; size?: number; color?: string }) => {
-  const { points, edges } = layoutHypercube(qubits, DEFAULT_VIEW, size, size, { margin: 1, labels: false });
+  const { points, edges } = layoutHypercube(qubits, defaultView(qubits), size, size, { margin: 1, labels: false });
   const dot = Math.max(1.3, size / (qubits >= 4 ? 20 : qubits === 3 ? 15 : 10));
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">

@@ -6,7 +6,7 @@ import CircuitPanel, { type CaseTab, type Hand } from './level/CircuitPanel';
 import { StageToggles, TransportControls } from './level/TransportBar';
 import { CELL_INFO } from './level/cells';
 import { activeColumnAt, runDuration, stageFrame } from '../game/animation';
-import { DEFAULT_VIEW, QUBIT_COLORS, type View } from '../game/hypercube';
+import { QUBIT_COLORS, defaultView, type View } from '../game/hypercube';
 import {
   ALL_CELLS,
   applyCircuit,
@@ -27,7 +27,7 @@ import { useGame } from '../state/GameContext';
 /** Matches the original pacing of 0.01 time units per frame at 60 fps. */
 const TIME_UNITS_PER_SECOND = 0.6;
 const FLASH_MS = 3000;
-const AXIS_NAMES = ['left → right', 'bottom → top', 'front → back', 'cube → cube'];
+const AXIS_NAMES = ['left → right', 'bottom → top', 'front → back', 'outer → inner'];
 
 interface GameLevelScreenProps {
   levelId: string;
@@ -88,7 +88,7 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
   // --- UI ---
   const [hand, setHand] = useState<Hand | null>(null);
   const [showTarget, setShowTarget] = useState(true);
-  const [view, setView] = useState<View>(DEFAULT_VIEW);
+  const [view, setView] = useState<View>(() => defaultView(qubits));
   const [activeArchiveId, setActiveArchiveId] = useState<string | null>(null);
   const [flash, setFlash] = useState<Flash | null>(null);
   const [celebrate, setCelebrate] = useState(false);
@@ -149,7 +149,7 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
     setPlaying(false);
     setLoop(fullLoop(next.columns));
     setHand(null);
-    if (next.qubits !== puzzle.qubits) setView(DEFAULT_VIEW);
+    if (next.qubits !== puzzle.qubits) setView(defaultView(next.qubits));
     if (tutorial) goToStep(firstStepOfPuzzle(tutorial, index), false);
   };
 
@@ -281,7 +281,7 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
     if (nq !== qubits) {
       setSandboxQubits(nq);
       setSandboxStart(null);
-      setView(DEFAULT_VIEW);
+      setView(defaultView(nq));
     }
     editCircuit(next);
     setLoop(prev => ({ ...fullLoop(nc), enabled: prev.enabled }));

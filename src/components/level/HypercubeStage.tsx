@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { StageFrame } from '../../game/animation';
-import { DEFAULT_VIEW, QUBIT_COLORS, layoutHypercube, type View } from '../../game/hypercube';
+import { QUBIT_COLORS, defaultView, layoutHypercube, type View } from '../../game/hypercube';
 import { EPS, cAbs, formatAmplitude, indexToBits, type Complex, type QState } from '../../game/quantum';
 
 interface HypercubeStageProps {
@@ -52,7 +52,7 @@ const HypercubeStage = ({ qubits, visual, frame, target, activeAxes, view, onVie
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
   const [hovered, setHovered] = useState<number | null>(null);
   const [drag, setDrag] = useState<{ kind: 'rotate' | 'ball'; from: number; x: number; y: number; moved: boolean } | null>(null);
-  const dragStart = useRef({ x: 0, y: 0, view: DEFAULT_VIEW });
+  const dragStart = useRef({ x: 0, y: 0, view });
 
   useEffect(() => {
     const el = containerRef.current;
@@ -140,7 +140,7 @@ const HypercubeStage = ({ qubits, visual, frame, target, activeAxes, view, onVie
         height={size.height}
         className={`block select-none touch-none ${canRotate ? (drag?.kind === 'rotate' ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
         onPointerDown={e => canRotate && startDrag(e, 'rotate')}
-        onDoubleClick={() => canRotate && onViewChange(DEFAULT_VIEW)}
+        onDoubleClick={() => canRotate && onViewChange(defaultView(qubits))}
       >
         <defs>
           <filter id="hc-glow" x="-50%" y="-50%" width="200%" height="200%">

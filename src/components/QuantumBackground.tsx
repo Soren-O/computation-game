@@ -9,7 +9,7 @@ const QuantumBackground = ({ animate }: { animate: boolean }) => {
       {/* Grid overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#4cc9f010_1px,transparent_1px),linear-gradient(to_bottom,#4cc9f010_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)]" />
 
-      {/* Four bits, as a hypercube turning through the fourth dimension */}
+      {/* A tesseract turning through the fourth dimension: decoration, and a hint of what four qubits would need */}
       <div className="absolute top-1/2 left-1/2 h-[95vmin] w-[95vmin] -translate-y-1/2 -translate-x-1/2 opacity-70 md:left-[62%]">
         <TesseractBackdrop animate={animate} />
       </div>

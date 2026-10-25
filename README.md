@@ -1,10 +1,12 @@
 # Quantum Odyssey (computation game)
 
-A puzzle game about bits and qubits, where the states sit on the corners of a hypercube.
-One bit is a circle that slides to another circle; two bits, a line that slides to another line;
-three, a square that slides to another square; four, a cube that slides to another cube.
-Each wire of the circuit is one direction of the shape, so a gate on that wire moves amplitude
-along that direction only.
+A puzzle game about bits and qubits, where every basis state is a circle on the corners of one
+hypercube: a line of two circles for one bit, a square for two, a cube for three. The shape
+itself never moves; what changes in time is what's on it. Each wire of the circuit is one
+direction of the shape, and a gate on that wire moves amplitude along that direction, so it
+looks like a circle sliding to the other circle, a line sliding onto the opposite line, or a
+square sliding onto the opposite square. The game stops at three qubits for now: a tesseract
+has no nice symmetric projection.
 
 Every amplitude is an arrow: the complex number itself, drawn in the complex plane (right = +1,
 up = +i), with the filled disk's area as the probability. When a gate sends pieces of amplitude
@@ -29,7 +31,7 @@ reference solution solves it). `npm run build` typechecks and builds into `dist/
 
 ## Where things are
 
-- `src/game/quantum.ts`: state-vector simulator (up to 4 qubits), gates, circuit columns.
+- `src/game/quantum.ts`: state-vector simulator (any qubit count; the game uses up to 3), gates, circuit columns.
 - `src/game/animation.ts`: how arrows travel, line up head-to-tail and merge during a gate.
 - `src/game/hypercube.ts`: corner positions, rotation and perspective.
 - `src/game/levels.ts`: the campaign. Puzzles are data; circuits use a one-character-per-wire

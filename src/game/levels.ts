@@ -66,7 +66,7 @@ export const LEVELS: LevelDef[] = [
     id: 'c1', x: 26, y: 72,
     title: 'Binary Basis',
     type: 'CLASSICAL',
-    description: 'Two bits make four states: the line slides to another line and becomes a square.',
+    description: 'Two bits: four states on a square. Flipping a bit slides a line onto the opposite line.',
     difficulty: 1,
     visual: 'bit',
     puzzles: [
@@ -81,7 +81,7 @@ export const LEVELS: LevelDef[] = [
     id: 'c2', x: 17, y: 50,
     title: 'Logic Gates',
     type: 'CLASSICAL',
-    description: 'Three bits: the square slides to another square and becomes a cube. Control dots turn NOT into reversible logic: copy, XOR, AND, OR.',
+    description: 'Three bits: eight states on a cube, where flipping a bit slides a square onto the opposite square. Control dots turn NOT into reversible logic: copy, XOR, AND, OR.',
     difficulty: 2,
     visual: 'bit',
     puzzles: [
@@ -96,20 +96,14 @@ export const LEVELS: LevelDef[] = [
     id: 'c3', x: 26, y: 27,
     title: 'Binary Counter',
     type: 'CLASSICAL',
-    description: 'Four bits: the cube slides to another cube. Build a counter that walks the ball around all sixteen corners.',
+    description: 'Three bits count from 0 to 7. Build counters that walk the ball around all eight corners of the cube.',
     difficulty: 3,
     visual: 'bit',
     puzzles: [
-      { qubits: 4, cases: one(ket('0000'), ket('0001')), columns: 1, gates: ['X'], solution: circuit('...X') },
-      { qubits: 4, cases: one(ket('0000'), ket('1111')), columns: 1, gates: ['X'], solution: circuit('XXXX') },
       { qubits: 2, cases: table('00>10', '10>01', '01>11', '11>00'), columns: 2, gates: ['CTRL', 'X'], solution: circuit('@X', 'X.') },
-      {
-        qubits: 4,
-        cases: table('0000>1000', '1000>0100', '1100>0010', '1110>0001', '0111>1111', '1111>0000'),
-        columns: 4,
-        gates: ['CTRL', 'X'],
-        solution: circuit('@@@X', '@@X.', '@X..', 'X...'),
-      },
+      { qubits: 3, cases: table('000>010', '100>110', '010>001', '011>000', '111>100'), columns: 2, gates: ['CTRL', 'X'], solution: circuit('.@X', '.X.') },
+      { qubits: 3, cases: table('000>100', '100>010', '110>001', '101>011', '011>111', '111>000'), columns: 3, gates: ['CTRL', 'X'], solution: circuit('@@X', '@X.', 'X..') },
+      { qubits: 3, cases: table('100>000', '000>111', '001>110', '010>100', '111>011'), columns: 3, gates: ['CTRL', 'X'], solution: circuit('X..', '@X.', '@@X') },
     ],
   },
 
@@ -186,7 +180,7 @@ export const LEVELS: LevelDef[] = [
     ],
   },
   {
-    id: 'q5', x: 60, y: 27,
+    id: 'q5', x: 56, y: 17,
     title: 'Quantum Cube',
     type: 'QUANTUM',
     description: 'Three qubits on a cube: spread over all eight corners, entangle three ways, and mark a single corner.',
@@ -198,27 +192,6 @@ export const LEVELS: LevelDef[] = [
       { qubits: 3, cases: one(uniform(3), uniform(3, v => (v === 7 ? -1 : 1))), columns: 1, gates: ['CTRL', 'Z', 'H'], solution: circuit('@@Z') },
       { qubits: 3, cases: one(superpose(['010', 1], ['110', 1]), superpose(['010', 1], ['101', 1])), columns: 1, gates: ['CTRL', 'SWAP'], solution: circuit('@##') },
       { qubits: 3, cases: one(ket('000'), uniform(3, parity)), columns: 2, gates: ['H', 'X', 'Z'], solution: circuit('HHH', 'ZZZ') },
-    ],
-  },
-  {
-    id: 'q6', x: 44, y: 11,
-    title: 'Tesseract',
-    type: 'QUANTUM',
-    description: 'Four qubits: the cube slides to another cube. Sixteen corners, one hypercube.',
-    difficulty: 5,
-    visual: 'qubit',
-    puzzles: [
-      { qubits: 4, cases: one(ket('0000'), superpose(['0000', 1], ['0001', 1])), columns: 1, gates: ['H', 'X'], solution: circuit('...H') },
-      { qubits: 4, cases: one(ket('0000'), uniform(4)), columns: 1, gates: ['H', 'X'], solution: circuit('HHHH') },
-      { qubits: 4, cases: one(ket('0000'), superpose(['0000', 1], ['1111', 1])), columns: 3, gates: ['H', 'CTRL', 'X'], solution: circuit('H...', '@XXX') },
-      { qubits: 4, cases: one(ket('0000'), uniform(4, parity)), columns: 2, gates: ['H', 'X', 'Z'], solution: circuit('HHHH', 'ZZZZ') },
-      {
-        qubits: 4,
-        cases: one(ket('0000'), superpose(['0000', 1], ['1100', 1], ['0011', 1], ['1111', 1])),
-        columns: 3,
-        gates: ['H', 'CTRL', 'X'],
-        solution: circuit('H.H.', '@X..', '..@X'),
-      },
     ],
   },
 ];
@@ -235,19 +208,17 @@ export const CONNECTIONS: [string, string][] = [
   ['q3', 'q4'],
   ['q4', 'q5'],
   ['c2', 'q5'],
-  ['q5', 'q6'],
-  ['c3', 'q6'],
 ];
 
 export const SANDBOX_LEVEL_ID = 'sandbox';
 export const SANDBOX_DEFAULT = { qubits: 2, columns: 6 };
-export const SANDBOX_LIMITS = { minQubits: 1, maxQubits: 4, minColumns: 1, maxColumns: 12 };
+export const SANDBOX_LIMITS = { minQubits: 1, maxQubits: 3, minColumns: 1, maxColumns: 12 };
 
 const SANDBOX_LEVEL: LevelDef = {
   id: SANDBOX_LEVEL_ID, x: 0, y: 0,
   title: 'Sandbox',
   type: 'QUANTUM',
-  description: 'Free play with every gate, on up to four qubits.',
+  description: 'Free play with every gate, on up to three qubits.',
   difficulty: 1,
   visual: 'qubit',
   puzzles: [

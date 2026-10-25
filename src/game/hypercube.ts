@@ -1,7 +1,9 @@
-// Where each basis state sits on screen. n qubits -> the corners of an
-// n-dimensional cube: qubit 0 runs left-right, qubit 1 bottom-top, qubit 2
-// front-back, and qubit 3 is a second copy of the cube beside the first.
-// A gate on qubit k therefore moves amplitude along the k-th direction.
+// Where each basis state sits on screen. n qubits -> the corners of one
+// n-dimensional cube, drawn once and never moved: qubit 0 runs left-right,
+// qubit 1 bottom-top, qubit 2 front-back, and qubit 3 outer-to-inner (the
+// usual cube-inside-a-cube picture of a tesseract). A gate on qubit k moves
+// amplitude along the k-th direction, so over time it looks like one face
+// sliding onto the opposite face.
 
 export interface View {
   /** Rotation about the vertical axis, radians. */
@@ -10,7 +12,11 @@ export interface View {
   pitch: number;
 }
 
-export const DEFAULT_VIEW: View = { yaw: -0.52, pitch: 0.34 };
+export const DEFAULT_VIEW: View = { yaw: -0.55, pitch: 0.41 };
+/** Chosen so none of the tesseract's 16 circles overlap and its three cube directions stay distinct. */
+const TESSERACT_VIEW: View = { yaw: -0.43, pitch: 0.27 };
+
+export const defaultView = (n: number): View => (n >= 4 ? TESSERACT_VIEW : DEFAULT_VIEW);
 
 export interface Edge {
   a: number;
@@ -33,8 +39,6 @@ export interface Layout {
   edges: Edge[];
   /** Node radius in px before the perspective factor. */
   radius: number;
-  /** Which way the second cube sits for four qubits. */
-  splitDirection: 'horizontal' | 'vertical';
 }
 
 export function hypercubeEdges(n: number): Edge[] {
@@ -44,12 +48,12 @@ export function hypercubeEdges(n: number): Edge[] {
   return edges;
 }
 
-/** Node radius as a fraction of the edge length, by qubit count. */
-const RADIUS_FRACTION = [0.3, 0.3, 0.27, 0.23, 0.22];
+/** Node radius in layout units (an unscaled edge is 1), by qubit count. */
+const RADIUS_FRACTION = [0.3, 0.3, 0.27, 0.21, 0.13];
 const MAX_RADIUS_PX = 74;
 const CAMERA_DISTANCE = 3.6;
-/** Distance between the two cubes for four qubits, in edge lengths. */
-const CUBE_GAP = 1.9;
+/** 4D camera distance: the inner (q3 = 1) cube is drawn at (D-½)/(D+½) ≈ 0.47 of the outer one. */
+const CAMERA_DISTANCE_4D = 1.4;
 /** Room under each node for its label, in units of node radius. */
 const LABEL_ROOM = 1.9;
 
@@ -63,15 +67,19 @@ export interface LayoutOptions {
 export function layoutHypercube(n: number, view: View, width: number, height: number, options: LayoutOptions = {}): Layout {
   const { margin = 12, labels = true } = options;
   const count = 1 << n;
-  const splitDirection = width >= height * 1.15 ? 'horizontal' : 'vertical';
   const cy = Math.cos(view.yaw), sy = Math.sin(view.yaw);
   const cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
   const rotate = n >= 3;
 
+  const outer4D = CAMERA_DISTANCE_4D / (CAMERA_DISTANCE_4D - 0.5);
+
   // Unit-space positions (edge length 1, +y up).
   const unit = Array.from({ length: count }, (_, v) => {
     const bit = (k: number) => (k < n ? ((v >> k) & 1) - 0.5 : 0);
-    let x = bit(0), y = bit(1), z = bit(2);
+    // Four qubits: perspective in the fourth direction shrinks the q3 = 1 cube inside the q3 = 0 cube.
+    const g = n >= 4 ? CAMERA_DISTANCE_4D / (CAMERA_DISTANCE_4D + bit(3)) : 1;
+    // q2 = 1 points away from the viewer, so |000⟩ is the front-bottom-left corner.
+    let x = bit(0) * g, y = bit(1) * g, z = -bit(2) * g;
     let f = 1;
     if (rotate) {
       // yaw about y, then pitch about x; +z faces the viewer
@@ -84,14 +92,10 @@ export function layoutHypercube(n: number, view: View, width: number, height: nu
       z = z2;
       f = CAMERA_DISTANCE / (CAMERA_DISTANCE - z);
     }
-    let px = x * f;
-    let py = y * f;
-    if (n >= 4) {
-      const w = bit(3);
-      if (splitDirection === 'horizontal') px += w * CUBE_GAP;
-      else py -= w * CUBE_GAP; // second cube below the first
-    }
-    return { x: px, y: py, depth: z, scale: f };
+    // Inner-cube circles are drawn a little smaller and further back, but not so small their arrows get hard to read.
+    const shrink = n >= 4 ? 0.4 + 0.6 * (g / outer4D) : 1;
+    const depth = n >= 4 ? z + (g - outer4D) * 0.5 : z;
+    return { x: x * f, y: y * f, depth, scale: f * shrink };
   });
 
   const rFrac = RADIUS_FRACTION[Math.min(n, 4)];
@@ -110,7 +114,6 @@ export function layoutHypercube(n: number, view: View, width: number, height: nu
     points: unit.map(p => ({ x: cxScreen + p.x * scale, y: cyScreen - p.y * scale, depth: p.depth, scale: p.scale })),
     edges: hypercubeEdges(n),
     radius: rFrac * scale,
-    splitDirection,
   };
 }
 
