@@ -1,0 +1,10 @@
+export enum GameState {
+  LOADING = 'LOADING',
+  MENU = 'MENU',
+  CAMPAIGN = 'CAMPAIGN',
+  GAME_LEVEL = 'GAME_LEVEL',
+  SANDBOX = 'SANDBOX',
+  ARCHIVES = 'ARCHIVES',
+  SETTINGS = 'SETTINGS',
+  QUIT = 'QUIT',
+}

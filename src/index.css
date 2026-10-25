@@ -1,0 +1,86 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-orbitron: "Orbitron", sans-serif;
+  --font-rajdhani: "Rajdhani", sans-serif;
+
+  --color-quantum-dark: #050510;
+  --color-quantum-purple: #7b2cbf;
+  --color-quantum-cyan: #4cc9f0;
+  --color-quantum-magenta: #f72585;
+
+  --animate-spin-slow: spin 10s linear infinite;
+  --animate-spin-reverse-slow: spin 15s linear infinite reverse;
+  --animate-pulse-glow: pulse-glow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-shimmer: shimmer 1s infinite;
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+
+  /* Animates `translate` (not `transform`) because Tailwind v4 translate-* utilities use that property. */
+  @keyframes shimmer {
+    from { translate: -100% 0; }
+    to { translate: 100% 0; }
+  }
+}
+
+@layer base {
+  /* Tailwind v3 defaults that the original markup was written against. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  body {
+    background-color: var(--color-quantum-dark);
+    color: white;
+    overflow: hidden;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f0f20;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-quantum-cyan);
+  border-radius: 4px;
+}
+
+/* "Reduce motion" setting, plus the OS-level preference. */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
