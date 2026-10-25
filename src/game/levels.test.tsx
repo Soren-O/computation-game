@@ -1,49 +1,65 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { finalState, statesEqual, type Circuit, type GateId } from './engine';
-import { CONNECTIONS, LEVELS, getLevel, isLevelBuilt, type Puzzle } from './levels';
+import { applyCircuit, columnStatus, norm, numQubits, statesMatch } from './quantum';
+import { CONNECTIONS, LEVELS, getLevel, isLevelBuilt } from './levels';
 import { TUTORIALS } from './tutorials';
 import { ARCHIVE_DATA } from './archives';
 
-/** Every circuit of length `slots` built from `gates` plus empty slots. */
-function* allCircuits(slots: number, gates: GateId[]): Generator<Circuit> {
-  if (slots === 0) {
-    yield [];
-    return;
-  }
-  for (const rest of allCircuits(slots - 1, gates)) {
-    for (const g of [null, ...gates]) yield [g, ...rest];
-  }
-}
-
-const solutionsOf = (p: Puzzle): Circuit[] =>
-  [...allCircuits(p.slots, p.gates)].filter(c => statesEqual(finalState(p.start, c), p.target!));
+const puzzles = LEVELS.flatMap(level => level.puzzles.map((p, i) => ({ name: `${level.id} #${i + 1}`, level, p })));
 
 describe('campaign puzzles', () => {
-  const puzzles = LEVELS.flatMap(level => level.puzzles.map((p, i) => ({ name: `${level.id} #${i + 1}`, p })));
-
-  it.each(puzzles)('$name is solvable with its slots and gates', ({ p }) => {
-    expect(p.target).toBeDefined();
-    expect(solutionsOf(p).length).toBeGreaterThan(0);
+  it.each(puzzles)('$name: its reference solution fits the puzzle', ({ p }) => {
+    expect(p.solution.length).toBeGreaterThan(0);
+    expect(p.solution.length).toBeLessThanOrEqual(p.columns);
+    for (const column of p.solution) {
+      expect(column).toHaveLength(p.qubits);
+      expect(columnStatus(column)).not.toBe('unpaired-swap');
+      for (const cell of column) if (cell) expect(p.gates).toContain(cell);
+    }
   });
 
-  it.each(puzzles)('$name is not already solved by an empty circuit', ({ p }) => {
-    expect(statesEqual(p.start, p.target!)).toBe(false);
+  it.each(puzzles)('$name: the solution solves every case', ({ p }) => {
+    for (const { start, target } of p.cases) {
+      expect(statesMatch(applyCircuit(start, p.solution), target, p.upToGlobalPhase)).toBe(true);
+    }
   });
 
-  it('only uses the bit visual for single-gate (NOT) levels', () => {
+  it.each(puzzles)('$name: states are well formed and the puzzle is not already solved', ({ p }) => {
+    for (const { start, target } of p.cases) {
+      expect(numQubits(start)).toBe(p.qubits);
+      expect(numQubits(target)).toBe(p.qubits);
+      expect(norm(start)).toBeCloseTo(1, 9);
+      expect(norm(target)).toBeCloseTo(1, 9);
+    }
+    expect(p.cases.every(({ start, target }) => statesMatch(start, target, p.upToGlobalPhase))).toBe(false);
+  });
+
+  it('only uses the bit visual where every gate keeps a single ball (no superposition or phases)', () => {
     for (const level of LEVELS.filter(l => l.visual === 'bit')) {
-      for (const p of level.puzzles) expect(p.gates).toEqual(['X']);
+      for (const p of level.puzzles) for (const g of p.gates) expect(['X', 'CTRL', 'SWAP']).toContain(g);
     }
   });
 });
 
 describe('campaign map', () => {
-  it('only connects levels that exist', () => {
+  it('only connects levels that exist, without cycles', () => {
     for (const [from, to] of CONNECTIONS) {
       expect(getLevel(from)).toBeDefined();
       expect(getLevel(to)).toBeDefined();
+      expect(LEVELS.findIndex(l => l.id === from)).not.toBe(-1);
     }
+    const reachable = new Set(['root']);
+    for (let changed = true; changed; ) {
+      changed = false;
+      for (const level of LEVELS) {
+        const parents = CONNECTIONS.filter(([, t]) => t === level.id).map(([s]) => s);
+        if (!reachable.has(level.id) && parents.length && parents.every(p => reachable.has(p))) {
+          reachable.add(level.id);
+          changed = true;
+        }
+      }
+    }
+    expect(reachable.size).toBe(LEVELS.length);
   });
 
   it('has unique level ids', () => {
@@ -52,12 +68,21 @@ describe('campaign map', () => {
 });
 
 describe('tutorials', () => {
+  it('exist for every built level', () => {
+    for (const level of LEVELS.filter(isLevelBuilt)) expect(TUTORIALS[level.id]).toBeDefined();
+  });
+
   it.each(Object.entries(TUTORIALS))('%s covers every puzzle of its level, in order', (levelId, steps) => {
     const level = getLevel(levelId);
     expect(level && isLevelBuilt(level)).toBe(true);
     const puzzleOrder = steps.map(s => s.puzzle);
     expect(puzzleOrder).toEqual([...puzzleOrder].sort((a, b) => a - b));
     expect(new Set(puzzleOrder)).toEqual(new Set(level!.puzzles.map((_, i) => i)));
+    // The last step of each puzzle must wait for the solve, or the player could get stuck.
+    level!.puzzles.forEach((_, i) => {
+      const last = steps.filter(s => s.puzzle === i).at(-1)!;
+      expect(last.awaitsSolve).toBe(true);
+    });
   });
 });
 

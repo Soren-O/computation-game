@@ -28,7 +28,7 @@ const ArchivesScreen = ({ onReturn, initialId, backLabel = 'Return to Menu' }: A
             className="flex items-center gap-2 px-4 py-2 text-quantum-cyan hover:bg-quantum-cyan/10 rounded border border-transparent hover:border-quantum-cyan/30 transition-all"
           >
             <ArrowLeft size={20} />
-            <span className="font-rajdhani font-bold uppercase tracking-wider">{backLabel}</span>
+            <span className="font-bold uppercase tracking-wider">{backLabel}</span>
           </button>
         </div>
 
@@ -82,7 +82,7 @@ const ArchivesScreen = ({ onReturn, initialId, backLabel = 'Return to Menu' }: A
                   <Lock size={48} className="text-red-500" />
                 </div>
                 <h2 className="text-3xl font-orbitron text-red-500 mb-2">ACCESS DENIED</h2>
-                <p className="font-rajdhani text-gray-400 max-w-md">
+                <p className="text-gray-400 max-w-md">
                   This data shard is encrypted using a quantum-resistant algorithm.{' '}
                   {unlockLevel ? `Complete the "${unlockLevel.title}" module to acquire decryption keys.` : 'Decryption keys are not yet available.'}
                 </p>
@@ -96,7 +96,7 @@ const ArchivesScreen = ({ onReturn, initialId, backLabel = 'Return to Menu' }: A
                       <span className="font-mono text-xs uppercase tracking-widest">{selectedEntry.category} // DECLASSIFIED</span>
                     </div>
                     <h1 className="text-4xl md:text-5xl font-orbitron font-bold text-white mb-4">{selectedEntry.title}</h1>
-                    <p className="text-xl text-gray-400 font-rajdhani">{selectedEntry.description}</p>
+                    <p className="text-xl text-gray-400">{selectedEntry.description}</p>
                   </div>
                   <div className="hidden md:block text-right font-mono text-xs text-gray-600">
                     <div className="mb-1">SIZE: 245 KB</div>
@@ -105,7 +105,7 @@ const ArchivesScreen = ({ onReturn, initialId, backLabel = 'Return to Menu' }: A
                 </div>
 
                 <div className="bg-white/5 p-6 rounded border-l-2 border-quantum-magenta mb-6">
-                  <p className="font-rajdhani text-lg leading-relaxed text-gray-200 select-text">{selectedEntry.content}</p>
+                  <p className="text-lg leading-relaxed text-gray-200 select-text">{selectedEntry.content}</p>
                 </div>
 
                 {/* Decorative raw data */}

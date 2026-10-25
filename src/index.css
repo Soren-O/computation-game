@@ -3,7 +3,8 @@
 
 @theme {
   --font-orbitron: "Orbitron", sans-serif;
-  --font-rajdhani: "Rajdhani", sans-serif;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
 
   --color-quantum-dark: #050510;
   --color-quantum-purple: #7b2cbf;

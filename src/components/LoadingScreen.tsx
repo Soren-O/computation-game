@@ -68,12 +68,12 @@ const LoadingScreen = ({ onComplete }: LoadingScreenProps) => {
         <div className="absolute inset-0 bg-white/10 w-full h-full animate-pulse" />
       </div>
 
-      <div className="mt-4 h-6 text-quantum-cyan font-rajdhani tracking-wider text-lg">
+      <div className="mt-4 h-6 text-quantum-cyan tracking-wider text-lg">
         <span className="mr-2">[{Math.floor(progress)}%]</span>
         {PHASES[phaseIndex]}
       </div>
 
-      <div className="absolute bottom-8 text-xs font-rajdhani tracking-[0.3em] uppercase text-gray-600">Press any key to skip</div>
+      <div className="absolute bottom-8 text-xs tracking-[0.3em] uppercase text-gray-600">Press any key to skip</div>
     </div>
   );
 };

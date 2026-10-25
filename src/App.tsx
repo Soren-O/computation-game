@@ -16,6 +16,7 @@ const App = () => {
   const [activeLevelId, setActiveLevelId] = useState<string | null>(null);
 
   const handleLoadingComplete = useCallback(() => setGameState(GameState.MENU), []);
+  const prefersReducedMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // There is no real "quit" in a browser tab, so quitting reboots the simulation.
   const navigate = useCallback((state: GameState) => {
@@ -63,7 +64,7 @@ const App = () => {
         settings.reduceMotion ? 'reduce-motion' : ''
       }`}
     >
-      <QuantumBackground />
+      <QuantumBackground animate={!settings.reduceMotion && !prefersReducedMotion && gameState !== GameState.GAME_LEVEL && gameState !== GameState.SANDBOX} />
 
       <main className="relative w-full h-full flex flex-col">{renderContent()}</main>
 

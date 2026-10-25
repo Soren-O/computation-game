@@ -14,7 +14,7 @@ type TabId = 'SETTINGS' | 'BUG' | 'FEEDBACK' | 'PATCH';
 const Header = ({ title, subtitle }: { title: string; subtitle: string }) => (
   <div>
     <h3 className="text-3xl font-orbitron text-white mb-2">{title}</h3>
-    <p className="text-quantum-cyan/70 font-rajdhani text-lg">{subtitle}</p>
+    <p className="text-quantum-cyan/70 text-lg">{subtitle}</p>
   </div>
 );
 
@@ -36,8 +36,8 @@ const ToggleRow = ({ label, hint, checked, onChange }: { label: string; hint: st
     className="w-full flex items-center justify-between gap-4 p-4 bg-white/5 rounded-lg border border-white/5 hover:border-white/15 text-left transition-colors"
   >
     <span>
-      <span className="block font-rajdhani text-gray-200 text-lg">{label}</span>
-      <span className="block font-rajdhani text-gray-500 text-sm">{hint}</span>
+      <span className="block text-gray-200 text-lg">{label}</span>
+      <span className="block text-gray-500 text-sm">{hint}</span>
     </span>
     <span className={`shrink-0 w-12 h-6 rounded-full relative transition-colors ${checked ? 'bg-quantum-magenta' : 'bg-gray-700'}`}>
       <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${checked ? 'left-7' : 'left-1'}`} />
@@ -63,7 +63,7 @@ const PatchItem = ({ version, date, children, current }: { version: string; date
     <div className={`absolute -left-[5px] top-0 w-2 h-2 rounded-full ${current ? 'bg-quantum-cyan animate-pulse' : 'bg-gray-700'}`} />
     <div className="flex items-baseline gap-3 mb-2">
       <span className={`font-orbitron font-bold text-lg ${current ? 'text-white' : 'text-gray-500'}`}>{version}</span>
-      <span className="font-rajdhani text-sm text-gray-500">{date}</span>
+      <span className="text-sm text-gray-500">{date}</span>
       {current && <span className="text-[10px] bg-quantum-cyan/20 text-quantum-cyan px-2 py-0.5 rounded border border-quantum-cyan/30 font-orbitron">LATEST</span>}
     </div>
     <div className="text-sm">{children}</div>
@@ -117,8 +117,8 @@ const SettingsPanel = () => {
         />
         <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white/5 rounded-lg border border-white/5">
           <span>
-            <span className="block font-rajdhani text-gray-200 text-lg">Campaign Progress</span>
-            <span className="block font-rajdhani text-gray-500 text-sm">
+            <span className="block text-gray-200 text-lg">Campaign Progress</span>
+            <span className="block text-gray-500 text-sm">
               {completedLevels.length} module{completedLevels.length === 1 ? '' : 's'} completed.
             </span>
           </span>
@@ -185,13 +185,13 @@ const ReportPanel = ({ kind }: { kind: 'BUG' | 'FEEDBACK' }) => {
             value={subject}
             onChange={e => setSubject(e.target.value)}
             placeholder="Subject / Error Code"
-            className={`bg-black/30 border border-white/10 rounded p-4 text-white font-rajdhani ${focusColor} focus:outline-none transition-colors`}
+            className={`bg-black/30 border border-white/10 rounded p-4 text-white ${focusColor} focus:outline-none transition-colors`}
           />
         ) : (
           <select
             value={category}
             onChange={e => setCategory(e.target.value)}
-            className={`bg-black/30 border border-white/10 rounded p-4 text-gray-300 font-rajdhani ${focusColor} focus:outline-none`}
+            className={`bg-black/30 border border-white/10 rounded p-4 text-gray-300 ${focusColor} focus:outline-none`}
           >
             <option>General Feedback</option>
             <option>Feature Request</option>
@@ -202,10 +202,10 @@ const ReportPanel = ({ kind }: { kind: 'BUG' | 'FEEDBACK' }) => {
           value={message}
           onChange={e => setMessage(e.target.value)}
           placeholder={kind === 'BUG' ? 'Describe the sequence of events leading to the anomaly...' : 'Enter your message...'}
-          className={`flex-1 bg-black/30 border border-white/10 rounded p-4 text-white font-rajdhani ${focusColor} focus:outline-none resize-none transition-colors`}
+          className={`flex-1 bg-black/30 border border-white/10 rounded p-4 text-white ${focusColor} focus:outline-none resize-none transition-colors`}
         />
         <div className="flex flex-wrap items-center justify-end gap-4">
-          {status && <p role="status" className="mr-auto text-sm text-gray-400 font-rajdhani">{status}</p>}
+          {status && <p role="status" className="mr-auto text-sm text-gray-400">{status}</p>}
           <ActionButton label="Copy Report" icon={<Copy size={18} />} variant={kind === 'BUG' ? 'danger' : 'primary'} onClick={copyReport} />
         </div>
       </div>
@@ -218,7 +218,16 @@ const PatchNotesPanel = () => (
     <Header title="System Updates" subtitle="Changelog of recent quantum stability patches." />
     <div className="mt-6 space-y-6">
       <PatchItem version={`v${APP_VERSION}`} date="2026-10-24" current>
-        <ul className="list-disc list-inside space-y-2 text-gray-400 font-rajdhani">
+        <ul className="list-disc list-inside space-y-2 text-gray-400">
+          <li>Up to four qubits. The states sit on the corners of a hypercube: a line, a square, a cube, and two cubes. Each wire is one direction of the shape.</li>
+          <li>Amplitudes are arrows, drawn as the complex numbers they are, with probability as the disk's area. When pieces of amplitude meet they add head-to-tail, so interference is visible.</li>
+          <li>A full circuit editor: control dots, SWAP, H, S, T and their inverses, gates in parallel, and a timeline you can scrub and loop.</li>
+          <li>Eight new levels (41 new puzzles): Binary Basis, Logic Gates, Binary Counter, Superposition, Entanglement, Interference, Quantum Cube and Tesseract.</li>
+          <li>Truth-table puzzles for classical logic, dashed ghost arrows for the goal, and a Sandbox with up to four qubits.</li>
+        </ul>
+      </PatchItem>
+      <PatchItem version="v2.6.0" date="2026-10-24">
+        <ul className="list-disc list-inside space-y-2 text-gray-400">
           <li>Campaign progress and settings now persist between sessions.</li>
           <li>Sandbox mode is online: free play with every gate and an adjustable timeline.</li>
           <li>Fixed puzzles skipping ahead and the simulation running at different speeds on different displays.</li>
@@ -228,7 +237,7 @@ const PatchNotesPanel = () => (
         </ul>
       </PatchItem>
       <PatchItem version="v2.5.0" date="2024-10-24">
-        <ul className="list-disc list-inside space-y-2 text-gray-400 font-rajdhani">
+        <ul className="list-disc list-inside space-y-2 text-gray-400">
           <li>Implemented new Settings Interface module.</li>
           <li>Optimized particle rendering for quantum background.</li>
           <li>Fixed a critical bug where qubits would decohere unexpectedly.</li>
@@ -236,13 +245,13 @@ const PatchNotesPanel = () => (
         </ul>
       </PatchItem>
       <PatchItem version="v2.4.2" date="2024-10-15">
-        <ul className="list-disc list-inside space-y-2 text-gray-400 font-rajdhani">
+        <ul className="list-disc list-inside space-y-2 text-gray-400">
           <li>Enhanced CSS animations for menu transitions.</li>
           <li>Gemini AI integration for dynamic fact generation.</li>
         </ul>
       </PatchItem>
       <PatchItem version="v1.0.0" date="2024-09-01">
-        <ul className="list-disc list-inside space-y-2 text-gray-400 font-rajdhani">
+        <ul className="list-disc list-inside space-y-2 text-gray-400">
           <li>Initial System Launch.</li>
         </ul>
       </PatchItem>
@@ -269,7 +278,7 @@ const SettingsMenu = ({ onReturn }: SettingsMenuProps) => {
             </div>
             <button onClick={onReturn} className="md:hidden flex items-center gap-2 text-gray-400 hover:text-white">
               <ArrowLeft size={18} className="text-quantum-cyan" />
-              <span className="font-rajdhani font-bold uppercase tracking-wider">Return</span>
+              <span className="font-bold uppercase tracking-wider">Return</span>
             </button>
           </div>
 
@@ -285,7 +294,7 @@ const SettingsMenu = ({ onReturn }: SettingsMenuProps) => {
             className="hidden md:flex mt-auto items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all group border border-transparent hover:border-white/10"
           >
             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform text-quantum-cyan" />
-            <span className="font-rajdhani font-bold uppercase tracking-wider">Return</span>
+            <span className="font-bold uppercase tracking-wider">Return</span>
           </button>
         </div>
 

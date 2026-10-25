@@ -1,0 +1,94 @@
+import { describe, expect, it } from 'vitest';
+import { CHAIN_END, TRAVEL_END, activeColumnAt, contributions, runDuration, stageFrame } from './animation';
+import { applyColumn, cAbs, cAdd, circuit, ket, parseColumn, statesMatch, superpose, uniform, type Complex, type QState } from './quantum';
+import { hypercubeEdges, layoutHypercube, DEFAULT_VIEW } from './hypercube';
+
+/** Sum of resting/merged arrows per corner, as a state. */
+function restingState(arrows: ReturnType<typeof stageFrame>['arrows'], size: number): QState {
+  const out: Complex[] = new Array(size).fill(null).map(() => ({ re: 0, im: 0 }));
+  for (const a of arrows) out[a.to] = cAdd(out[a.to], a.value);
+  return out;
+}
+
+describe('timeline', () => {
+  it('leads in, plays each column, then holds', () => {
+    expect(runDuration(3)).toBe(5);
+    expect(activeColumnAt(0.5, 3)).toBeNull();
+    expect(activeColumnAt(1.25, 3)).toEqual({ index: 0, progress: 0.25 });
+    expect(activeColumnAt(4.5, 3)).toBeNull();
+  });
+});
+
+describe('contributions', () => {
+  it('sum to the column output at every corner', () => {
+    const state = superpose(['000', 1], ['110', -1], ['011', 1]);
+    const col = parseColumn('H@X');
+    const parts = contributions(state, col);
+    const out = applyColumn(state, col);
+    const summed = restingState(parts.map(p => ({ key: '', from: p.from, to: p.to, travel: 1, offset: { re: 0, im: 0 }, value: p.end, opacity: 1, kind: 'part' as const })), 8);
+    expect(statesMatch(summed, out)).toBe(true);
+  });
+
+  it('cancel in pairs when a Hadamard undoes a Hadamard', () => {
+    const parts = contributions(superpose(['0', 1], ['1', 1]), ['H']);
+    const into1 = parts.filter(p => p.to === 1);
+    expect(into1).toHaveLength(2);
+    expect(cAbs(cAdd(into1[0].end, into1[1].end))).toBeLessThan(1e-12);
+  });
+});
+
+describe('stageFrame', () => {
+  const c = circuit('H', 'Z');
+
+  it('shows the input before the first column and the output during the hold', () => {
+    const start = ket('0');
+    expect(statesMatch(restingState(stageFrame(start, c, 0.5).arrows, 2), start)).toBe(true);
+    const end = stageFrame(start, c, 3.5);
+    expect(end.activeColumn).toBeNull();
+    expect(statesMatch(restingState(end.arrows, 2), superpose(['0', 1], ['1', -1]))).toBe(true);
+  });
+
+  it('moves pieces along the route of the gate', () => {
+    const mid = stageFrame(ket('0'), c, 1 + TRAVEL_END / 2);
+    expect(mid.activeColumn).toBe(0);
+    expect(mid.routes).toEqual([[0, 1]]);
+    expect(mid.arrows.some(a => a.from === 0 && a.to === 1 && a.travel > 0 && a.travel < 1)).toBe(true);
+  });
+
+  it('lands exactly on the next state when merged', () => {
+    const start = uniform(2);
+    const two = circuit('HH');
+    const merged = stageFrame(start, two, 1.999999);
+    const sums = merged.arrows.filter(a => a.kind === 'sum' || a.opacity > 0.999);
+    expect(statesMatch(restingState(sums, 4), ket('00'), false, 1e-4)).toBe(true);
+    const chained = stageFrame(start, two, 1 + (TRAVEL_END + CHAIN_END) / 2);
+    expect(chained.arrows.some(a => cAbs(a.offset) > 0)).toBe(true);
+  });
+});
+
+describe('hypercube layout', () => {
+  it.each([1, 2, 3, 4])('connects corners that differ in one bit (%i qubits)', n => {
+    const edges = hypercubeEdges(n);
+    expect(edges).toHaveLength(n * 2 ** (n - 1));
+    for (const e of edges) expect(e.a ^ e.b).toBe(1 << e.axis);
+  });
+
+  it.each([1, 2, 3, 4])('fits inside the stage (%i qubits)', n => {
+    for (const [w, h] of [[900, 500], [360, 420]]) {
+      const layout = layoutHypercube(n, DEFAULT_VIEW, w, h);
+      for (const p of layout.points) {
+        expect(p.x - layout.radius * p.scale).toBeGreaterThanOrEqual(0);
+        expect(p.x + layout.radius * p.scale).toBeLessThanOrEqual(w);
+        expect(p.y - layout.radius * p.scale).toBeGreaterThanOrEqual(0);
+        expect(p.y + layout.radius * p.scale).toBeLessThanOrEqual(h);
+      }
+    }
+  });
+
+  it('puts qubit 0 left to right and qubit 1 bottom to top', () => {
+    const layout = layoutHypercube(2, DEFAULT_VIEW, 800, 600);
+    const [p00, p10, p01] = [layout.points[0], layout.points[1], layout.points[2]];
+    expect(p10.x).toBeGreaterThan(p00.x);
+    expect(p01.y).toBeLessThan(p00.y);
+  });
+});

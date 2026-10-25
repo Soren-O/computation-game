@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { ArrowLeft, Atom, CircleCheck, Construction, Cpu, LayoutGrid, Lock, Network, Play, X, Zap } from 'lucide-react';
-import { CONNECTIONS, LEVELS, isLevelBuilt, prerequisitesOf, type LevelDef } from '../game/levels';
-import { ALL_GATES } from '../game/engine';
-import { OPERATORS } from './gateIcons';
+import { ArrowLeft, CircleCheck, Construction, LayoutGrid, Lock, Network, Play, X } from 'lucide-react';
+import { CONNECTIONS, LEVELS, isLevelBuilt, levelQubits, prerequisitesOf, type LevelDef } from '../game/levels';
+import { ALL_CELLS } from '../game/quantum';
+import { cellLabel } from './level/cells';
+import HypercubeGlyph from './HypercubeGlyph';
 import { useGame } from '../state/GameContext';
 
 interface LevelSelectScreenProps {
@@ -31,7 +32,7 @@ const LevelSelectScreen = ({ onReturn, onStartLevel }: LevelSelectScreenProps) =
   const selectedStatus = selectedLevel ? getLevelStatus(selectedLevel) : 'LOCKED';
   const canStart = selectedStatus === 'UNLOCKED' || selectedStatus === 'COMPLETED';
   const selectedGates = selectedLevel
-    ? ALL_GATES.filter(g => selectedLevel.puzzles.some(p => p.gates.includes(g)))
+    ? ALL_CELLS.filter(g => selectedLevel.puzzles.some(p => p.gates.includes(g)))
     : [];
 
   return (
@@ -42,7 +43,7 @@ const LevelSelectScreen = ({ onReturn, onStartLevel }: LevelSelectScreenProps) =
           className="flex items-center gap-2 px-4 py-2 text-quantum-cyan hover:bg-quantum-cyan/10 rounded border border-transparent hover:border-quantum-cyan/30 transition-all"
         >
           <ArrowLeft size={20} />
-          <span className="font-rajdhani font-bold uppercase tracking-wider">Abort Mission</span>
+          <span className="font-bold uppercase tracking-wider">Abort Mission</span>
         </button>
       </div>
 
@@ -55,13 +56,10 @@ const LevelSelectScreen = ({ onReturn, onStartLevel }: LevelSelectScreenProps) =
           <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#4cc9f010_1px,transparent_1px),linear-gradient(to_bottom,#4cc9f010_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
 
           {/* Top fade: unexplored sectors */}
-          <div className="absolute top-0 left-0 right-0 h-64 bg-linear-to-b from-black via-[#050510] to-transparent z-20 pointer-events-none" />
-          <div className="absolute top-8 left-0 right-0 text-center z-20 pointer-events-none opacity-30">
-            <div className="font-orbitron tracking-[0.5em] text-sm text-gray-500">UNEXPLORED SECTORS</div>
-          </div>
+          <div className="absolute top-0 left-0 right-0 h-24 bg-linear-to-b from-black to-transparent z-0 pointer-events-none" />
 
           {/* Branch labels */}
-          <div className="absolute top-[40%] left-[10%] md:left-[15%] w-64 -translate-y-1/2 pointer-events-none opacity-40 z-0 hidden md:block">
+          <div className="absolute bottom-6 left-6 w-64 pointer-events-none opacity-40 z-0 hidden md:block">
             <div className="absolute inset-0 bg-quantum-cyan/5 blur-3xl rounded-full" />
             <div className="relative border-l-4 border-quantum-cyan/30 pl-4 py-2">
               <h2 className="text-4xl font-orbitron font-bold text-transparent bg-clip-text bg-linear-to-b from-quantum-cyan to-transparent opacity-50">CLASSICAL</h2>
@@ -71,7 +69,7 @@ const LevelSelectScreen = ({ onReturn, onStartLevel }: LevelSelectScreenProps) =
               </div>
             </div>
           </div>
-          <div className="absolute top-[40%] right-[10%] md:right-[15%] w-64 -translate-y-1/2 pointer-events-none opacity-40 z-0 hidden md:block text-right">
+          <div className="absolute bottom-6 right-6 w-64 pointer-events-none opacity-40 z-0 hidden md:block text-right">
             <div className="absolute inset-0 bg-quantum-magenta/5 blur-3xl rounded-full" />
             <div className="relative border-r-4 border-quantum-magenta/30 pr-4 py-2">
               <h2 className="text-4xl font-orbitron font-bold text-transparent bg-clip-text bg-linear-to-b from-quantum-magenta to-transparent opacity-50">QUANTUM</h2>
@@ -139,17 +137,14 @@ const LevelSelectScreen = ({ onReturn, onStartLevel }: LevelSelectScreenProps) =
                     <Construction size={20} />
                   ) : status === 'LOCKED' ? (
                     <Lock size={20} />
-                  ) : status === 'COMPLETED' ? (
-                    <CircleCheck size={24} className="text-green-400" />
-                  ) : level.type === 'CLASSICAL' ? (
-                    <Cpu size={24} className="text-quantum-cyan" />
-                  ) : level.type === 'QUANTUM' ? (
-                    <Atom size={24} className="text-quantum-magenta" />
                   ) : (
-                    <Zap size={24} className="text-yellow-400" />
+                    <HypercubeGlyph qubits={levelQubits(level)} size={36} color={level.type === 'CLASSICAL' ? '#4cc9f0' : level.type === 'QUANTUM' ? '#f72585' : '#facc15'} />
                   )}
                 </div>
-                <div className={`absolute top-full mt-2 whitespace-nowrap font-rajdhani font-bold text-sm tracking-wider px-2 py-1 bg-black/60 rounded border border-white/5 ${typeText(level)}`}>
+                {status === 'COMPLETED' && (
+                  <CircleCheck size={18} className="absolute -right-1 -top-1 z-20 rounded-full bg-black text-green-400" />
+                )}
+                <div className={`absolute top-full mt-2 whitespace-nowrap font-semibold text-xs tracking-wider px-2 py-0.5 bg-black/60 rounded border border-white/5 ${typeText(level)}`}>
                   {level.title}
                 </div>
               </button>
@@ -190,25 +185,32 @@ const LevelSelectScreen = ({ onReturn, onStartLevel }: LevelSelectScreenProps) =
               <div className="flex-1 overflow-y-auto">
                 <div className="bg-white/5 p-4 rounded border border-white/10 mb-6">
                   <h3 className="text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider">Mission Briefing</h3>
-                  <p className="text-gray-400 font-rajdhani leading-relaxed">{selectedLevel.description}</p>
+                  <p className="text-gray-400 leading-relaxed">{selectedLevel.description}</p>
                 </div>
 
                 {selectedStatus === 'IN_DEVELOPMENT' ? (
-                  <p className="text-sm text-quantum-magenta/80 font-rajdhani">This module hasn't been built yet. Check back in a future update.</p>
+                  <p className="text-sm text-quantum-magenta/80">This module hasn't been built yet. Check back in a future update.</p>
                 ) : (
                   <div className="space-y-4">
+                    <div className="flex items-center justify-between text-sm text-gray-400 border-b border-white/5 pb-2">
+                      <span>{selectedLevel.visual === 'bit' ? 'Bits' : 'Qubits'}</span>
+                      <span className="flex items-center gap-2 text-white font-mono">
+                        <HypercubeGlyph qubits={levelQubits(selectedLevel)} size={22} />
+                        {levelQubits(selectedLevel)}
+                      </span>
+                    </div>
                     <div className="flex items-center justify-between text-sm text-gray-400 border-b border-white/5 pb-2">
                       <span>Puzzles</span>
                       <span className="text-white font-mono">{selectedLevel.puzzles.length}</span>
                     </div>
-                    <div className="flex items-center justify-between text-sm text-gray-400 border-b border-white/5 pb-2">
+                    <div className="flex items-center justify-between gap-4 text-sm text-gray-400 border-b border-white/5 pb-2">
                       <span>Gates</span>
-                      <span className="text-white font-mono">
-                        {selectedGates.map(g => (selectedLevel.visual === 'qubit' ? OPERATORS[g].quantumName : OPERATORS[g].name)).join(', ')}
+                      <span className="text-right text-white font-mono">
+                        {selectedGates.map(g => cellLabel(g, selectedLevel.visual === 'bit')).join('  ')}
                       </span>
                     </div>
                     {selectedStatus === 'LOCKED' && (
-                      <p className="text-sm text-gray-500 font-rajdhani">
+                      <p className="text-sm text-gray-500">
                         Complete {prerequisitesOf(selectedLevel.id).map(id => getNode(id)?.title).join(' and ')} to unlock.
                       </p>
                     )}

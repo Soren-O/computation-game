@@ -14,7 +14,7 @@ const MenuButton = ({ label, icon, onClick, variant = 'primary' }: {
   variant?: 'primary' | 'secondary' | 'danger';
 }) => {
   
-  const baseStyles = "group relative w-full md:w-80 h-14 flex items-center px-6 mb-4 border-l-4 transition-all duration-300 ease-out hover:translate-x-2 overflow-hidden";
+  const baseStyles = "group relative w-full md:w-80 h-14 flex items-center px-6 mb-4 [@media(max-height:720px)]:mb-2 [@media(max-height:720px)]:h-12 border-l-4 transition-all duration-300 ease-out hover:translate-x-2 overflow-hidden";
   
   const variants = {
     primary: "border-quantum-cyan bg-linear-to-r from-quantum-cyan/10 to-transparent hover:from-quantum-cyan/20 hover:border-l-8 text-white hover:text-quantum-cyan",
@@ -35,15 +35,15 @@ const MenuButton = ({ label, icon, onClick, variant = 'primary' }: {
 
 const MainMenu = ({ onNavigate }: MainMenuProps) => {
   return (
-    <div className="flex flex-col items-start justify-center h-full w-full p-8 md:pl-24 z-10 relative animate-in fade-in duration-700 slide-in-from-left-10">
+    <div className="flex flex-col items-start justify-center h-full w-full overflow-y-auto p-8 md:pl-24 z-10 relative animate-in fade-in duration-700 slide-in-from-left-10 [@media(max-height:720px)]:py-4">
       
       {/* Logo Area */}
-      <div className="mb-12">
+      <div className="mb-12 [@media(max-height:720px)]:mb-5">
         <div className="flex items-center gap-3 mb-2">
           <Activity className="text-quantum-magenta" size={32} />
-          <span className="text-quantum-cyan text-sm font-rajdhani tracking-[0.3em] uppercase">System Online v{APP_VERSION}</span>
+          <span className="text-quantum-cyan text-sm tracking-[0.3em] uppercase">System Online v{APP_VERSION}</span>
         </div>
-        <h1 className="text-6xl md:text-8xl font-orbitron font-black text-white leading-none tracking-tighter drop-shadow-[0_0_15px_rgba(76,201,240,0.5)]">
+        <h1 className="text-6xl md:text-8xl [@media(max-height:720px)]:text-5xl font-orbitron font-black text-white leading-none tracking-tighter drop-shadow-[0_0_15px_rgba(76,201,240,0.5)]">
           QUANTUM<br />
           <span className="text-transparent bg-clip-text bg-linear-to-r from-quantum-purple to-quantum-magenta">ODYSSEY</span>
         </h1>
@@ -74,7 +74,7 @@ const MainMenu = ({ onNavigate }: MainMenuProps) => {
           onClick={() => onNavigate(GameState.SETTINGS)} 
           variant="secondary"
         />
-        <div className="h-8" />
+        <div className="h-8 [@media(max-height:720px)]:h-2" />
         <MenuButton 
           label="Quit System" 
           icon={<LogOut size={24} />} 
