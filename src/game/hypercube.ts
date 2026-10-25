@@ -1,9 +1,13 @@
 // Where each basis state sits on screen. n qubits -> the corners of one
 // n-dimensional cube, drawn once and never moved: qubit 0 runs left-right,
-// qubit 1 bottom-top, qubit 2 front-back, and qubit 3 outer-to-inner (the
-// usual cube-inside-a-cube picture of a tesseract). A gate on qubit k moves
-// amplitude along the k-th direction, so over time it looks like one face
-// sliding onto the opposite face.
+// qubit 1 bottom-top, qubit 2 front-back. A gate on qubit k moves amplitude
+// along the k-th direction, so over time it looks like one face sliding onto
+// the opposite face.
+//
+// Four qubits have two drawings. 'symmetric' projects the tesseract flat onto
+// its most symmetric plane: each qubit is an arrow of the same length, 45°
+// apart, and the 16 corners fall on two regular octagons. 'nested' is the
+// usual cube inside a cube, with qubit 3 running outer-to-inner.
 
 export interface View {
   /** Rotation about the vertical axis, radians. */
@@ -57,16 +61,35 @@ const CAMERA_DISTANCE_4D = 1.4;
 /** Room under each node for its label, in units of node radius. */
 const LABEL_ROOM = 1.9;
 
+export type TesseractStyle = 'symmetric' | 'nested';
+
 export interface LayoutOptions {
   /** Empty border around the drawing, px. */
   margin?: number;
   /** Leave room under the nodes for ket labels. */
   labels?: boolean;
+  /** How to draw four qubits. */
+  tesseract?: TesseractStyle;
+}
+
+/** Screen directions of each qubit in the symmetric tesseract: q0 →, q1 ↑, q2 ↗, q3 ↖. */
+const SYMMETRIC_AXES = [0, 90, 45, 135].map(deg => ({ x: Math.cos((deg * Math.PI) / 180), y: Math.sin((deg * Math.PI) / 180) }));
+/** In the symmetric view the closest corners are 0.414 apart, so this leaves a small gap. */
+const SYMMETRIC_RADIUS = 0.17;
+
+/** Whether dragging should rotate this drawing (only the 3D ones). */
+export const isRotatable = (n: number, style: TesseractStyle = 'symmetric') => n === 3 || (n >= 4 && style === 'nested');
+
+/** Words for each qubit's direction, for the legend. */
+export function axisNames(n: number, style: TesseractStyle = 'symmetric'): string[] {
+  if (n >= 4 && style === 'symmetric') return ['left → right', 'bottom → top', 'diagonal ↗', 'diagonal ↖'];
+  return ['left → right', 'bottom → top', 'front → back', 'outer → inner'].slice(0, n);
 }
 
 export function layoutHypercube(n: number, view: View, width: number, height: number, options: LayoutOptions = {}): Layout {
-  const { margin = 12, labels = true } = options;
+  const { margin = 12, labels = true, tesseract = 'symmetric' } = options;
   const count = 1 << n;
+  const symmetric = n >= 4 && tesseract === 'symmetric';
   const cy = Math.cos(view.yaw), sy = Math.sin(view.yaw);
   const cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
   const rotate = n >= 3;
@@ -76,6 +99,12 @@ export function layoutHypercube(n: number, view: View, width: number, height: nu
   // Unit-space positions (edge length 1, +y up).
   const unit = Array.from({ length: count }, (_, v) => {
     const bit = (k: number) => (k < n ? ((v >> k) & 1) - 0.5 : 0);
+    if (symmetric) {
+      // Flat projection: every edge of one qubit is the same arrow, so slides are rigid.
+      const x = SYMMETRIC_AXES.reduce((sum, axis, k) => sum + bit(k) * axis.x, 0);
+      const y = SYMMETRIC_AXES.reduce((sum, axis, k) => sum + bit(k) * axis.y, 0);
+      return { x, y, depth: 0, scale: 1 };
+    }
     // Four qubits: perspective in the fourth direction shrinks the q3 = 1 cube inside the q3 = 0 cube.
     const g = n >= 4 ? CAMERA_DISTANCE_4D / (CAMERA_DISTANCE_4D + bit(3)) : 1;
     // q2 = 1 points away from the viewer, so |000⟩ is the front-bottom-left corner.
@@ -98,7 +127,7 @@ export function layoutHypercube(n: number, view: View, width: number, height: nu
     return { x: x * f, y: y * f, depth, scale: f * shrink };
   });
 
-  const rFrac = RADIUS_FRACTION[Math.min(n, 4)];
+  const rFrac = symmetric ? SYMMETRIC_RADIUS : RADIUS_FRACTION[Math.min(n, 4)];
   const xs = unit.map(p => p.x);
   const ys = unit.map(p => p.y);
   const pad = rFrac * 1.25;

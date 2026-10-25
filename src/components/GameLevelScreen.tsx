@@ -6,28 +6,27 @@ import CircuitPanel, { type CaseTab, type Hand } from './level/CircuitPanel';
 import { StageToggles, TransportControls } from './level/TransportBar';
 import { CELL_INFO } from './level/cells';
 import { activeColumnAt, gateMarks, runDuration, stageFrame } from '../game/animation';
-import { QUBIT_COLORS, defaultView, type View } from '../game/hypercube';
+import { QUBIT_COLORS, axisNames, defaultView, isRotatable, type TesseractStyle, type View } from '../game/hypercube';
 import {
   ALL_CELLS,
   applyCircuit,
   basisState,
+  circuit as buildCircuit,
   emptyCircuit,
   formatState,
   indexToBits,
-  isGate,
   statesMatch,
   type CellId,
   type Circuit,
   type QState,
 } from '../game/quantum';
-import { SANDBOX_DEFAULT, SANDBOX_LEVEL_ID, SANDBOX_LIMITS, getLevel, isLevelBuilt, type LevelDef } from '../game/levels';
+import { MAX_COLUMNS, getLevel, isLevelBuilt, type LevelDef } from '../game/levels';
 import { ArchiveLinkContext, TUTORIALS, firstStepOfPuzzle, type LoopRange, type SystemMode, type TutorialContext } from '../game/tutorials';
 import { useGame } from '../state/GameContext';
 
 /** Matches the original pacing of 0.01 time units per frame at 60 fps. */
 const TIME_UNITS_PER_SECOND = 0.6;
 const FLASH_MS = 3000;
-const AXIS_NAMES = ['left → right', 'bottom → top', 'front → back', 'outer → inner'];
 
 interface GameLevelScreenProps {
   levelId: string;
@@ -59,24 +58,29 @@ interface Flash {
 }
 
 const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }) => {
-  const { markLevelComplete, settings } = useGame();
-  const isSandboxLevel = level.id === SANDBOX_LEVEL_ID;
+  const { markLevelComplete } = useGame();
+  const freePlay = level.freePlay;
+  const isFreePlay = !!freePlay;
   const tutorial = TUTORIALS[level.id] ?? null;
   const classical = level.visual === 'bit';
 
   // --- Puzzle & circuit ---
   const [puzzleIndex, setPuzzleIndex] = useState(0);
   const puzzle = level.puzzles[puzzleIndex];
-  const [sandboxQubits, setSandboxQubits] = useState(SANDBOX_DEFAULT.qubits);
-  const qubits = isSandboxLevel ? sandboxQubits : puzzle.qubits;
-  const [circuit, setCircuit] = useState<Circuit>(() => emptyCircuit(qubits, puzzle.columns));
+  const [freeQubits, setFreeQubits] = useState(freePlay?.qubits ?? 1);
+  const qubits = isFreePlay ? freeQubits : puzzle.qubits;
+  const [circuit, setCircuit] = useState<Circuit>(() => {
+    if (!freePlay) return emptyCircuit(qubits, puzzle.columns);
+    const preset = buildCircuit(...(freePlay.circuit ?? []));
+    return [...preset, ...emptyCircuit(qubits, Math.max(0, freePlay.columns - preset.length))];
+  });
   const [caseIndex, setCaseIndex] = useState(0);
   const [caseResults, setCaseResults] = useState<(boolean | null)[]>([]);
-  const [mode, setMode] = useState<SystemMode>(isSandboxLevel ? 'SANDBOX' : 'PUZZLE');
+  const [mode, setMode] = useState<SystemMode>(isFreePlay ? 'SANDBOX' : 'PUZZLE');
   const [sandboxStart, setSandboxStart] = useState<QState | null>(null);
   const currentCase = puzzle.cases[Math.min(caseIndex, puzzle.cases.length - 1)];
   const initialState: QState =
-    mode === 'SANDBOX' && sandboxStart ? sandboxStart : isSandboxLevel ? basisState(qubits, 0) : currentCase.start;
+    mode === 'SANDBOX' && sandboxStart ? sandboxStart : isFreePlay ? basisState(qubits, 0) : currentCase.start;
   const duration = runDuration(circuit.length);
 
   // --- Playback ---
@@ -89,6 +93,7 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
   const [hand, setHand] = useState<Hand | null>(null);
   const [showTarget, setShowTarget] = useState(true);
   const [view, setView] = useState<View>(() => defaultView(qubits));
+  const [tesseractStyle, setTesseractStyle] = useState<TesseractStyle>('symmetric');
   const [activeArchiveId, setActiveArchiveId] = useState<string | null>(null);
   const [flash, setFlash] = useState<Flash | null>(null);
   const [celebrate, setCelebrate] = useState(false);
@@ -155,7 +160,7 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
 
   const restartLevel = () => {
     loadPuzzle(0);
-    setMode(isSandboxLevel ? 'SANDBOX' : 'PUZZLE');
+    setMode(isFreePlay ? 'SANDBOX' : 'PUZZLE');
     setSandboxStart(null);
     setSolved(false);
     setShowVictory(false);
@@ -187,7 +192,7 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
       return;
     }
 
-    if (mode === 'PUZZLE' && !isSandboxLevel && !solved) {
+    if (mode === 'PUZZLE' && !isFreePlay && !solved) {
       const outputs = puzzle.cases.map(c => applyCircuit(c.start, circuit));
       const results = puzzle.cases.map((c, k) => statesMatch(outputs[k], c.target, puzzle.upToGlobalPhase));
       setCaseResults(results);
@@ -212,7 +217,7 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
     }
     setTime(0);
     // loadPuzzle/showFlash are omitted: they're recreated each render and only use setters plus `level`/`tutorial`.
-  }, [isPlaying, time, runEnd, loop.enabled, loop.start, mode, puzzle, solved, circuit, puzzleIndex, caseIndex, level, isSandboxLevel, markLevelComplete]);
+  }, [isPlaying, time, runEnd, loop.enabled, loop.start, mode, puzzle, solved, circuit, puzzleIndex, caseIndex, level, isFreePlay, markLevelComplete]);
 
   // --- Controls ---
   const togglePlay = () => {
@@ -275,11 +280,12 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
   };
 
   const resizeSandbox = (dQubits: number, dColumns: number) => {
-    const nq = Math.max(SANDBOX_LIMITS.minQubits, Math.min(SANDBOX_LIMITS.maxQubits, qubits + dQubits));
-    const nc = Math.max(SANDBOX_LIMITS.minColumns, Math.min(SANDBOX_LIMITS.maxColumns, circuit.length + dColumns));
+    if (!freePlay) return;
+    const nq = Math.max(freePlay.minQubits, Math.min(freePlay.maxQubits, qubits + dQubits));
+    const nc = Math.max(1, Math.min(MAX_COLUMNS, circuit.length + dColumns));
     const next = Array.from({ length: nc }, (_, k) => Array.from({ length: nq }, (_, q) => circuit[k]?.[q] ?? null));
     if (nq !== qubits) {
-      setSandboxQubits(nq);
+      setFreeQubits(nq);
       setSandboxStart(null);
       setView(defaultView(nq));
     }
@@ -336,19 +342,13 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
 
   // --- Derived view state ---
   const frame = useMemo(() => stageFrame(initialState, circuit, time), [initialState, circuit, time]);
-  const target = !isSandboxLevel && mode === 'PUZZLE' ? currentCase.target : null;
+  const target = !isFreePlay && mode === 'PUZZLE' ? currentCase.target : null;
   const active = activeColumnAt(time, circuit.length);
   const activeIndex = active?.index ?? null;
   const marks = useMemo(
     () => (activeIndex === null ? null : gateMarks(qubits, circuit[activeIndex])),
     [activeIndex, circuit, qubits],
   );
-  // Fade the marks in as a column starts and out as it ends.
-  const marksOpacity = active ? Math.max(0, Math.min(1, active.progress / 0.08, (1 - active.progress) / 0.12)) : 0;
-  const prefersReducedMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const activeAxes = active
-    ? circuit[active.index].flatMap((cell, q) => (isGate(cell) || cell === 'SWAP' ? [q] : []))
-    : [];
   const caseTabs: CaseTab[] =
     puzzle.cases.length > 1
       ? puzzle.cases.map((c, k) => ({
@@ -377,7 +377,7 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
               <div className="font-mono text-[10px] text-quantum-cyan/60">
                 {qubits} {classical ? 'BIT' : 'QUBIT'}
                 {qubits > 1 ? 'S' : ''} //{' '}
-                {isSandboxLevel ? 'FREE PLAY' : `PUZZLE ${puzzleIndex + 1} OF ${level.puzzles.length}`}
+                {isFreePlay ? 'FREE PLAY' : `PUZZLE ${puzzleIndex + 1} OF ${level.puzzles.length}`}
               </div>
             </div>
           </div>
@@ -393,7 +393,7 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
             onLoopToggle={() => setLoop(prev => ({ ...prev, enabled: !prev.enabled }))}
             onSpeedChange={setPlaybackSpeed}
           />
-          {!isSandboxLevel && (
+          {!isFreePlay && (
             <div className="hidden w-40 flex-wrap items-center justify-end gap-1 lg:flex" aria-label="Puzzle progress">
               {level.puzzles.map((_, k) => (
                 <span key={k} className={`h-1.5 w-4 rounded-full ${k < puzzleIndex || solved ? 'bg-green-400/80' : k === puzzleIndex ? 'bg-quantum-cyan' : 'bg-white/10'}`} />
@@ -460,29 +460,41 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
             visual={level.visual}
             frame={frame}
             target={showTarget ? target : null}
-            activeAxes={activeAxes}
             view={view}
             onViewChange={setView}
             onPickStart={mode === 'SANDBOX' ? pickStart : undefined}
             celebrate={celebrate}
             marks={marks}
-            marksOpacity={marksOpacity}
-            animateMarks={!settings.reduceMotion && !prefersReducedMotion}
+            tesseractStyle={tesseractStyle}
           />
           {/* Axis legend */}
           {qubits > 1 && (
-            <div className="pointer-events-none absolute right-3 top-3 hidden flex-col gap-1 rounded-lg border border-white/5 bg-black/40 px-3 py-2 text-[11px] backdrop-blur sm:flex">
-              {Array.from({ length: qubits }, (_, q) => (
-                <div key={q} className="flex items-center gap-2">
-                  <span className="h-0.5 w-4 rounded-full" style={{ background: QUBIT_COLORS[q] }} />
-                  <span className="font-mono" style={{ color: QUBIT_COLORS[q] }}>q{q}</span>
-                  <span className="text-gray-500">{AXIS_NAMES[q]}</span>
-                </div>
-              ))}
-              {qubits >= 3 && (
-                <div className="mt-1 flex items-center gap-1.5 text-gray-600">
-                  <Move3d size={12} /> drag to rotate
-                </div>
+            <div className="absolute right-3 top-3 flex flex-col items-end gap-2">
+              <div className="pointer-events-none hidden flex-col gap-1 rounded-lg border border-white/5 bg-black/40 px-3 py-2 text-[11px] backdrop-blur sm:flex">
+                {axisNames(qubits, tesseractStyle).map((name, q) => (
+                  <div key={q} className="flex items-center gap-2">
+                    <span className="h-0.5 w-4 rounded-full" style={{ background: QUBIT_COLORS[q] }} />
+                    <span className="font-mono" style={{ color: QUBIT_COLORS[q] }}>q{q}</span>
+                    <span className="text-gray-500">{name}</span>
+                  </div>
+                ))}
+                {isRotatable(qubits, tesseractStyle) && (
+                  <div className="mt-1 flex items-center gap-1.5 text-gray-600">
+                    <Move3d size={12} /> drag to rotate
+                  </div>
+                )}
+              </div>
+              {qubits >= 4 && (
+                <button
+                  onClick={() => {
+                    setTesseractStyle(style => (style === 'symmetric' ? 'nested' : 'symmetric'));
+                    setView(defaultView(qubits));
+                  }}
+                  title="Switch between the symmetric drawing and the cube inside a cube"
+                  className="rounded-lg border border-white/15 bg-black/60 px-2.5 py-1.5 font-orbitron text-[10px] tracking-wider text-gray-300 backdrop-blur hover:text-white"
+                >
+                  VIEW: {tesseractStyle === 'symmetric' ? 'SYMMETRIC' : 'CUBE IN CUBE'}
+                </button>
               )}
             </div>
           )}
@@ -521,7 +533,7 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
             toolbar={
               <StageToggles
                 mode={mode}
-                showModeToggle={!isSandboxLevel}
+                showModeToggle={!isFreePlay}
                 showTarget={target ? showTarget : null}
                 onModeToggle={toggleMode}
                 onTargetToggle={() => setShowTarget(s => !s)}
@@ -549,14 +561,15 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
               setTime(0);
             }}
             resize={
-              isSandboxLevel
+              freePlay
                 ? {
                     onQubits: d => resizeSandbox(d, 0),
                     onColumns: d => resizeSandbox(0, d),
-                    canAddQubit: qubits < SANDBOX_LIMITS.maxQubits,
-                    canRemoveQubit: qubits > SANDBOX_LIMITS.minQubits,
-                    canAddColumn: circuit.length < SANDBOX_LIMITS.maxColumns,
-                    canRemoveColumn: circuit.length > SANDBOX_LIMITS.minColumns,
+                    showQubits: freePlay.minQubits < freePlay.maxQubits,
+                    canAddQubit: qubits < freePlay.maxQubits,
+                    canRemoveQubit: qubits > freePlay.minQubits,
+                    canAddColumn: circuit.length < MAX_COLUMNS,
+                    canRemoveColumn: circuit.length > 1,
                   }
                 : undefined
             }

@@ -1,11 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { applyCircuit, columnStatus, norm, numQubits, statesMatch } from './quantum';
+import { applyCircuit, columnStatus, norm, numQubits, parseColumn, statesMatch } from './quantum';
 import { CONNECTIONS, LEVELS, getLevel, isLevelBuilt } from './levels';
 import { TUTORIALS } from './tutorials';
 import { ARCHIVE_DATA } from './archives';
 
-const puzzles = LEVELS.flatMap(level => level.puzzles.map((p, i) => ({ name: `${level.id} #${i + 1}`, level, p })));
+const puzzles = LEVELS.filter(l => !l.freePlay).flatMap(level => level.puzzles.map((p, i) => ({ name: `${level.id} #${i + 1}`, level, p })));
 
 describe('campaign puzzles', () => {
   it.each(puzzles)('$name: its reference solution fits the puzzle', ({ p }) => {
@@ -34,6 +34,17 @@ describe('campaign puzzles', () => {
     expect(p.cases.every(({ start, target }) => statesMatch(start, target, p.upToGlobalPhase))).toBe(false);
   });
 
+  it('preloads free-play circuits that fit their level', () => {
+    for (const level of LEVELS.filter(l => l.freePlay)) {
+      const { circuit: spec = [], qubits, columns } = level.freePlay!;
+      expect(spec.length).toBeLessThanOrEqual(columns);
+      for (const column of spec) {
+        expect(column).toHaveLength(qubits);
+        expect(columnStatus(parseColumn(column))).not.toBe('unpaired-swap');
+      }
+    }
+  });
+
   it('only uses the bit visual where every gate keeps a single ball (no superposition or phases)', () => {
     for (const level of LEVELS.filter(l => l.visual === 'bit')) {
       for (const p of level.puzzles) for (const g of p.gates) expect(['X', 'CTRL', 'SWAP']).toContain(g);
@@ -48,12 +59,12 @@ describe('campaign map', () => {
       expect(getLevel(to)).toBeDefined();
       expect(LEVELS.findIndex(l => l.id === from)).not.toBe(-1);
     }
-    const reachable = new Set(['root']);
+    const reachable = new Set<string>();
     for (let changed = true; changed; ) {
       changed = false;
       for (const level of LEVELS) {
         const parents = CONNECTIONS.filter(([, t]) => t === level.id).map(([s]) => s);
-        if (!reachable.has(level.id) && parents.length && parents.every(p => reachable.has(p))) {
+        if (!reachable.has(level.id) && parents.every(p => reachable.has(p))) {
           reachable.add(level.id);
           changed = true;
         }
@@ -79,6 +90,7 @@ describe('tutorials', () => {
     expect(puzzleOrder).toEqual([...puzzleOrder].sort((a, b) => a - b));
     expect(new Set(puzzleOrder)).toEqual(new Set(level!.puzzles.map((_, i) => i)));
     // The last step of each puzzle must wait for the solve, or the player could get stuck.
+    if (level!.freePlay) return;
     level!.puzzles.forEach((_, i) => {
       const last = steps.filter(s => s.puzzle === i).at(-1)!;
       expect(last.awaitsSolve).toBe(true);

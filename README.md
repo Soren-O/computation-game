@@ -5,8 +5,10 @@ hypercube: a line of two circles for one bit, a square for two, a cube for three
 itself never moves; what changes in time is what's on it. Each wire of the circuit is one
 direction of the shape, and a gate on that wire moves amplitude along that direction, so it
 looks like a circle sliding to the other circle, a line sliding onto the opposite line, or a
-square sliding onto the opposite square. The game stops at three qubits for now: a tesseract
-has no nice symmetric projection.
+square sliding onto the opposite square. The campaign stops at three qubits for now; the
+Tesseract Lab is a free-play level with four, drawn flat in the tesseract's most symmetric view
+(two octagons, each qubit one direction of the same length), with a circuit that runs every kind
+of gate.
 
 Every amplitude is an arrow: the complex number itself, drawn in the complex plane (right = +1,
 up = +i), with the filled disk's area as the probability. When a gate sends pieces of amplitude

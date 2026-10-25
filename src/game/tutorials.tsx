@@ -217,6 +217,21 @@ const Q5_TUTORIAL: TutorialStep[] = [
   { puzzle: 4, text: <>Spread over the cube with each arrow's sign set by parity: <Dir>right</Dir> for an even number of 1s, <Dir>left</Dir> for odd.</>, awaitsSolve: true },
 ];
 
+const LAB_TUTORIAL: TutorialStep[] = [
+  {
+    puzzle: 0,
+    text: <>Four qubits, sixteen corners: one <Term id="018">hypercube</Term>, drawn in its most symmetric view. Each wire is one direction, q0 → , q1 ↑, q2 ↗, q3 ↖, all the same length, so a gate on a wire shifts amplitude by the same arrow everywhere on the shape.</>,
+  },
+  {
+    puzzle: 0,
+    text: <>The circuit runs one of every kind of gate. Watch the marks: a walkway for amplitude that moves (X), a walkway with spinners for amplitude that moves and turns (Y), arrows around the circle for amplitude that turns in place (Z, S, T), and both at once for H. A control dot limits a gate to half the tesseract; SWAP walks across diagonals.</>,
+  },
+  {
+    puzzle: 0,
+    text: <>Everything is editable, and tapping a corner restarts from that state. The VIEW button switches to the cube-inside-a-cube drawing, which you can drag to rotate.</>,
+  },
+];
+
 export const TUTORIALS: Record<string, TutorialStep[]> = {
   root: ROOT_TUTORIAL,
   q1: Q1_TUTORIAL,
@@ -227,6 +242,7 @@ export const TUTORIALS: Record<string, TutorialStep[]> = {
   c1: C1_TUTORIAL,
   c2: C2_TUTORIAL,
   c3: C3_TUTORIAL,
+  lab4: LAB_TUTORIAL,
 };
 
 export const firstStepOfPuzzle = (steps: TutorialStep[], puzzle: number): number =>

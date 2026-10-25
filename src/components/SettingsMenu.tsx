@@ -219,6 +219,13 @@ const PatchNotesPanel = () => (
     <div className="mt-6 space-y-6">
       <PatchItem version={`v${APP_VERSION}`} date="2026-10-25" current>
         <ul className="list-disc list-inside space-y-2 text-gray-400">
+          <li>Tesseract Lab: four qubits on one tesseract in its most symmetric view, two octagons where every qubit is one direction of the same length. It runs a circuit with every kind of gate; edit it freely. A VIEW button switches to the cube inside a cube.</li>
+          <li>Gate marks move with the amplitude: chevrons ride the walkway at the same speed as the arrows, turn arrows turn exactly as far as the amplitude does, and everything stops when you pause. A gate's motion now fills most of its step instead of a quick burst.</li>
+          <li>Only the edges a gate actually acts on light up, and ket labels stay readable on top of the marks.</li>
+        </ul>
+      </PatchItem>
+      <PatchItem version="v3.1.0" date="2026-10-25">
+        <ul className="list-disc list-inside space-y-2 text-gray-400">
           <li>Gates show what they do while they play. Amplitude that moves gets a walkway of marching arrows between the circles; amplitude that turns gets arrows around its circle (two for a half turn, four for a quarter, eight for an eighth); amplitude that does both gets a walkway with a little spinner and its factor, like ×i.</li>
           <li>The marks come straight from each gate's matrix, so a controlled gate only marks the half of the shape where its control is 1.</li>
         </ul>

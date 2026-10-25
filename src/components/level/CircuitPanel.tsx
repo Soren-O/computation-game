@@ -45,6 +45,7 @@ interface CircuitPanelProps {
   toolbar?: ReactNode;
   /** Sandbox level only. */
   resize?: {
+    showQubits: boolean;
     onQubits: (delta: number) => void;
     onColumns: (delta: number) => void;
     canAddQubit: boolean;
@@ -215,7 +216,9 @@ const CircuitPanel = ({
         <div className="ml-auto flex flex-wrap items-center justify-end gap-3 text-xs text-gray-400">
           {resize && (
             <>
-              <Stepper label="Qubits" value={qubits} onMinus={() => resize.onQubits(-1)} onPlus={() => resize.onQubits(1)} canMinus={resize.canRemoveQubit} canPlus={resize.canAddQubit} />
+              {resize.showQubits && (
+                <Stepper label="Qubits" value={qubits} onMinus={() => resize.onQubits(-1)} onPlus={() => resize.onQubits(1)} canMinus={resize.canRemoveQubit} canPlus={resize.canAddQubit} />
+              )}
               <Stepper label="Steps" value={columns} onMinus={() => resize.onColumns(-1)} onPlus={() => resize.onColumns(1)} canMinus={resize.canRemoveColumn} canPlus={resize.canAddColumn} />
             </>
           )}

@@ -19,6 +19,16 @@ export interface Puzzle {
 
 export type LevelType = 'ROOT' | 'CLASSICAL' | 'QUANTUM';
 
+/** A level without goals: every gate, a resizable timeline, and an optional preloaded circuit. */
+export interface FreePlay {
+  qubits: number;
+  minQubits: number;
+  maxQubits: number;
+  columns: number;
+  /** Preloaded circuit in the one-character-per-wire notation. */
+  circuit?: string[];
+}
+
 export interface LevelDef {
   id: string;
   title: string;
@@ -32,6 +42,7 @@ export interface LevelDef {
   visual: 'bit' | 'qubit';
   /** Played in order. An empty list means the level hasn't been built yet. */
   puzzles: Puzzle[];
+  freePlay?: FreePlay;
 }
 
 const one = (start: QState, target: QState): PuzzleCase[] => [{ start, target }];
@@ -41,6 +52,17 @@ const table = (...rows: string[]): PuzzleCase[] =>
     const [a, b] = row.split('>');
     return { start: ket(a), target: ket(b) };
   });
+
+export const MAX_COLUMNS = 12;
+
+/** A placeholder puzzle for free-play levels: no goal, every gate. */
+const freePuzzle = (qubits: number, columns: number): Puzzle => ({
+  qubits,
+  cases: [{ start: ket('0'.repeat(qubits)), target: ket('0'.repeat(qubits)) }],
+  columns,
+  gates: ALL_CELLS,
+  solution: [],
+});
 
 const i = cx(0, 1);
 const minusI = cx(0, -1);
@@ -194,9 +216,25 @@ export const LEVELS: LevelDef[] = [
       { qubits: 3, cases: one(ket('000'), uniform(3, parity)), columns: 2, gates: ['H', 'X', 'Z'], solution: circuit('HHH', 'ZZZ') },
     ],
   },
+  {
+    id: 'lab4', x: 80, y: 13,
+    title: 'Tesseract Lab',
+    type: 'QUANTUM',
+    description: 'Four qubits on one tesseract, drawn in its most symmetric view. No goals: a circuit that runs every kind of gate, to watch and to edit.',
+    difficulty: 1,
+    visual: 'qubit',
+    puzzles: [freePuzzle(4, MAX_COLUMNS)],
+    freePlay: {
+      qubits: 4,
+      minQubits: 4,
+      maxQubits: 4,
+      columns: MAX_COLUMNS,
+      circuit: ['X...', '.H..', '..Y.', '...H', '.Z..', '..S.', '...T', '@X..', '@.@X', '#..#', '.s.t', 'HHHH'],
+    },
+  },
 ];
 
-/** Campaign map edges: [prerequisite, unlocks]. A level needs every prerequisite. */
+/** Campaign map edges: [prerequisite, unlocks]. A level needs every prerequisite; levels with none are open from the start. */
 export const CONNECTIONS: [string, string][] = [
   ['root', 'c1'],
   ['c1', 'c2'],
@@ -211,9 +249,6 @@ export const CONNECTIONS: [string, string][] = [
 ];
 
 export const SANDBOX_LEVEL_ID = 'sandbox';
-export const SANDBOX_DEFAULT = { qubits: 2, columns: 6 };
-export const SANDBOX_LIMITS = { minQubits: 1, maxQubits: 3, minColumns: 1, maxColumns: 12 };
-
 const SANDBOX_LEVEL: LevelDef = {
   id: SANDBOX_LEVEL_ID, x: 0, y: 0,
   title: 'Sandbox',
@@ -221,15 +256,8 @@ const SANDBOX_LEVEL: LevelDef = {
   description: 'Free play with every gate, on up to three qubits.',
   difficulty: 1,
   visual: 'qubit',
-  puzzles: [
-    {
-      qubits: SANDBOX_DEFAULT.qubits,
-      cases: [{ start: ket('00'), target: ket('00') }],
-      columns: SANDBOX_DEFAULT.columns,
-      gates: ALL_CELLS,
-      solution: [],
-    },
-  ],
+  puzzles: [freePuzzle(2, 6)],
+  freePlay: { qubits: 2, minQubits: 1, maxQubits: 3, columns: 6 },
 };
 
 export function getLevel(id: string): LevelDef | undefined {

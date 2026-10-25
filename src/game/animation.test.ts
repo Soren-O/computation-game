@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHAIN_END, TRAVEL_END, activeColumnAt, contributions, gateMarks, runDuration, stageFrame } from './animation';
+import { INTERFERE_TIMING, SLIDE_TIMING, activeColumnAt, contributions, gateMarks, runDuration, stageFrame } from './animation';
 import { applyColumn, cAbs, cAdd, circuit, ket, parseColumn, statesMatch, superpose, uniform, type Complex, type QState } from './quantum';
 import { hypercubeEdges, layoutHypercube, defaultView } from './hypercube';
 
@@ -49,7 +49,7 @@ describe('stageFrame', () => {
   });
 
   it('moves pieces along the route of the gate', () => {
-    const mid = stageFrame(ket('0'), c, 1 + TRAVEL_END / 2);
+    const mid = stageFrame(ket('0'), c, 1 + (SLIDE_TIMING.travelStart + SLIDE_TIMING.travelEnd) / 2);
     expect(mid.activeColumn).toBe(0);
     expect(mid.routes).toEqual([[0, 1]]);
     expect(mid.arrows.some(a => a.from === 0 && a.to === 1 && a.travel > 0 && a.travel < 1)).toBe(true);
@@ -61,8 +61,24 @@ describe('stageFrame', () => {
     const merged = stageFrame(start, two, 1.999999);
     const sums = merged.arrows.filter(a => a.kind === 'sum' || a.opacity > 0.999);
     expect(statesMatch(restingState(sums, 4), ket('00'), false, 1e-4)).toBe(true);
-    const chained = stageFrame(start, two, 1 + (TRAVEL_END + CHAIN_END) / 2);
+    const chained = stageFrame(start, two, 1 + (INTERFERE_TIMING.travelEnd + INTERFERE_TIMING.chainEnd) / 2);
     expect(chained.arrows.some(a => cAbs(a.offset) > 0)).toBe(true);
+  });
+
+  it('moves at a steady pace through most of the step when nothing meets', () => {
+    const at = (p: number) => stageFrame(ket('0'), circuit('X'), 1 + p).travel;
+    expect(at(0.05)).toBe(0);
+    expect(at(0.49)).toBeCloseTo(0.5, 2);
+    expect(at(0.9)).toBeCloseTo(1, 6);
+    // The marks are up for exactly as long as the piece is moving.
+    expect(stageFrame(ket('0'), circuit('X'), 1.5).marksOpacity).toBe(1);
+    expect(stageFrame(ket('0'), circuit('X'), 1.98).marksOpacity).toBe(0);
+  });
+
+  it('leaves time to line up and merge when pieces meet', () => {
+    const f = stageFrame(superpose(['0', 1], ['1', 1]), circuit('H'), 1 + INTERFERE_TIMING.travelEnd - 0.01);
+    expect(f.travel).toBeGreaterThan(0.95);
+    expect(stageFrame(superpose(['0', 1], ['1', 1]), circuit('H'), 1.8).marksOpacity).toBe(0);
   });
 });
 
@@ -94,8 +110,27 @@ describe('hypercube layout', () => {
       }
   });
 
-  it('draws four qubits as one tesseract: the q3 = 1 cube sits inside the q3 = 0 cube', () => {
-    const { points } = layoutHypercube(4, defaultView(4), 900, 520);
+  it('draws the symmetric tesseract as two regular octagons with rigid slides', () => {
+    const { points, edges } = layoutHypercube(4, defaultView(4), 900, 520);
+    const cx = points.reduce((a, p) => a + p.x, 0) / 16;
+    const cy = points.reduce((a, p) => a + p.y, 0) / 16;
+    const radii = points.map(p => Math.hypot(p.x - cx, p.y - cy));
+    const rings = [...new Set(radii.map(r => Math.round(r)))].sort((a, b) => a - b);
+    expect(rings).toHaveLength(2);
+    for (const ring of rings) expect(radii.filter(r => Math.round(r) === ring)).toHaveLength(8);
+    expect(Math.round(radii[0])).toBe(rings[1]); // |0000⟩ is on the outer ring
+    // Every edge of one qubit is the same screen vector.
+    for (let axis = 0; axis < 4; axis++) {
+      const vs = edges.filter(e => e.axis === axis).map(e => [points[e.b].x - points[e.a].x, points[e.b].y - points[e.a].y]);
+      for (const [dx, dy] of vs) {
+        expect(dx).toBeCloseTo(vs[0][0], 6);
+        expect(dy).toBeCloseTo(vs[0][1], 6);
+      }
+    }
+  });
+
+  it('can draw four qubits nested: the q3 = 1 cube sits inside the q3 = 0 cube', () => {
+    const { points } = layoutHypercube(4, defaultView(4), 900, 520, { tesseract: 'nested' });
     const outer = points.filter((_, v) => !(v & 8));
     const inner = points.filter((_, v) => v & 8);
     const mean = (ps: typeof points) => ({ x: ps.reduce((s, p) => s + p.x, 0) / ps.length, y: ps.reduce((s, p) => s + p.y, 0) / ps.length });

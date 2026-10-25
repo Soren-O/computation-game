@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { GateMarks, StageFrame } from '../../game/animation';
 import GateMarksLayer from './GateMarksLayer';
-import { QUBIT_COLORS, defaultView, layoutHypercube, type View } from '../../game/hypercube';
+import { QUBIT_COLORS, defaultView, isRotatable, layoutHypercube, type TesseractStyle, type View } from '../../game/hypercube';
 import { EPS, cAbs, formatAmplitude, indexToBits, type Complex, type QState } from '../../game/quantum';
 
 interface HypercubeStageProps {
@@ -10,8 +10,6 @@ interface HypercubeStageProps {
   frame: StageFrame;
   /** Drawn as dashed ghost arrows / rings. */
   target: QState | null;
-  /** Qubits the playing column acts on; their edges glow. */
-  activeAxes: number[];
   view: View;
   onViewChange: (view: View) => void;
   /** Sandbox: tap or drag the ball to a corner to start there. */
@@ -20,9 +18,7 @@ interface HypercubeStageProps {
   celebrate: boolean;
   /** What the playing column does: walkways and turn arrows. */
   marks: GateMarks | null;
-  marksOpacity: number;
-  /** False keeps the marks still (reduce-motion). */
-  animateMarks: boolean;
+  tesseractStyle: TesseractStyle;
 }
 
 interface Size {
@@ -53,7 +49,7 @@ function Arrow({ x, y, v, unit, color, opacity, width }: { x: number; y: number;
   );
 }
 
-const HypercubeStage = ({ qubits, visual, frame, target, activeAxes, view, onViewChange, onPickStart, celebrate, marks, marksOpacity, animateMarks }: HypercubeStageProps) => {
+const HypercubeStage = ({ qubits, visual, frame, target, view, onViewChange, onPickStart, celebrate, marks, tesseractStyle }: HypercubeStageProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
   const [hovered, setHovered] = useState<number | null>(null);
@@ -69,8 +65,8 @@ const HypercubeStage = ({ qubits, visual, frame, target, activeAxes, view, onVie
   }, []);
 
   const layout = useMemo(
-    () => (size.width > 0 ? layoutHypercube(qubits, view, size.width, size.height) : null),
-    [qubits, view, size.width, size.height],
+    () => (size.width > 0 ? layoutHypercube(qubits, view, size.width, size.height, { tesseract: tesseractStyle }) : null),
+    [qubits, view, size.width, size.height, tesseractStyle],
   );
 
   // Rotating the cube, or dragging the start ball in sandbox mode.
@@ -125,7 +121,7 @@ const HypercubeStage = ({ qubits, visual, frame, target, activeAxes, view, onVie
     setDrag({ kind, from, x, y, moved: false });
   };
 
-  const canRotate = qubits >= 3;
+  const canRotate = isRotatable(qubits, tesseractStyle);
 
   if (!layout) return <div ref={containerRef} className="absolute inset-0" />;
 
@@ -137,6 +133,10 @@ const HypercubeStage = ({ qubits, visual, frame, target, activeAxes, view, onVie
   const r = (v: number) => radius * points[v].scale;
   const labelSize = Math.max(10, Math.min(15, radius * 0.3));
   const routeSet = new Set(frame.routes.map(([a, b]) => `${Math.min(a, b)}-${Math.max(a, b)}`));
+  // Edges a gate acts on (it may be controlled, so not every edge of its wire).
+  const markedEdges = new Set(
+    (marks?.lanes ?? []).filter(l => frame.marksOpacity > 0 && Number.isInteger(Math.log2(l.from ^ l.to))).map(l => `${Math.min(l.from, l.to)}-${Math.max(l.from, l.to)}`),
+  );
   const arrowWidth = Math.max(1.8, radius * 0.075);
 
   return (
@@ -173,7 +173,7 @@ const HypercubeStage = ({ qubits, visual, frame, target, activeAxes, view, onVie
 
         {/* Edges, coloured by the qubit (wire) they belong to */}
         {edges.map(({ a, b, axis }) => {
-          const active = activeAxes.includes(axis);
+          const active = markedEdges.has(`${a}-${b}`);
           const carrying = routeSet.has(`${a}-${b}`);
           const depthFade = Math.min(fade(a), fade(b));
           return (
@@ -246,17 +246,12 @@ const HypercubeStage = ({ qubits, visual, frame, target, activeAxes, view, onVie
                   )}
                 </g>
               )}
-              {radius >= 13 && (
-                <text y={R + labelSize + 3} textAnchor="middle" fontSize={labelSize} className="font-mono" fill="#cbd5e1" fillOpacity={disk > EPS ? 0.95 : 0.45}>
-                  |{indexToBits(v, qubits)}⟩
-                </text>
-              )}
             </g>
           );
         })}
 
         {/* What the playing gate does */}
-        {marks && <GateMarksLayer marks={marks} points={points} radius={radius} opacity={marksOpacity} animate={animateMarks} />}
+        {marks && <GateMarksLayer marks={marks} points={points} radius={radius} opacity={frame.marksOpacity} travel={frame.travel} />}
 
         {/* Amplitudes: arrows (qubit) or balls (bit) */}
         <g filter="url(#hc-glow)" pointerEvents="none">
@@ -285,6 +280,34 @@ const HypercubeStage = ({ qubits, visual, frame, target, activeAxes, view, onVie
             );
           })}
         </g>
+
+        {/* Ket labels on top, outlined so walkways and arrows never hide them */}
+        {radius >= 13 && (
+          <g pointerEvents="none">
+            {order.map(v => {
+              const p = points[v];
+              return (
+                <text
+                  key={v}
+                  x={p.x}
+                  y={p.y + r(v) + labelSize + 3}
+                  textAnchor="middle"
+                  fontSize={labelSize}
+                  className="font-mono"
+                  fill="#cbd5e1"
+                  fillOpacity={(frame.disks[v] ?? 0) > EPS ? 0.95 : 0.5}
+                  stroke="#04040c"
+                  strokeWidth={3}
+                  strokeOpacity={0.85}
+                  paintOrder="stroke"
+                  opacity={fade(v)}
+                >
+                  |{indexToBits(v, qubits)}⟩
+                </text>
+              );
+            })}
+          </g>
+        )}
 
         {/* Ball being dragged to a new starting corner */}
         {drag?.kind === 'ball' && drag.moved && <circle cx={drag.x} cy={drag.y} r={radius * 0.45} fill="url(#hc-ball)" opacity={0.75} pointerEvents="none" />}

@@ -61,9 +61,21 @@ export function contributions(state: QState, column: Column): Contribution[] {
   return result;
 }
 
-/** Fractions of a column's time unit spent travelling, then lining up head-to-tail, then merging. */
-export const TRAVEL_END = 0.55;
-export const CHAIN_END = 0.78;
+/**
+ * When things happen within one column's time unit (fractions of it). Pieces travel at a steady
+ * pace, like riding a walkway. If pieces meet at a corner they then line up head-to-tail and
+ * merge, so travel is shorter to leave time for that.
+ */
+export interface ColumnTiming {
+  travelStart: number;
+  travelEnd: number;
+  chainEnd: number;
+  mergeEnd: number;
+}
+export const SLIDE_TIMING: ColumnTiming = { travelStart: 0.08, travelEnd: 0.9, chainEnd: 0.9, mergeEnd: 0.9 };
+export const INTERFERE_TIMING: ColumnTiming = { travelStart: 0.08, travelEnd: 0.58, chainEnd: 0.76, mergeEnd: 0.92 };
+/** How long the gate marks take to fade out after the pieces arrive. */
+const MARKS_FADE = 0.07;
 
 export interface ArrowSprite {
   key: string;
@@ -90,6 +102,10 @@ export interface StageFrame {
   routes: [number, number][];
   /** State with every finished column applied. */
   state: QState;
+  /** 0..1 progress of the pieces' travel in the playing column (0 when none is playing). */
+  travel: number;
+  /** How visible the gate marks are: up while pieces move, faded out otherwise. */
+  marksOpacity: number;
 }
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -194,7 +210,7 @@ export function stageFrame(start: QState, c: Circuit, t: number): StageFrame {
   const active = activeColumnAt(t, columns);
 
   if (!active) {
-    return { arrows: restingArrows(before), disks: before.map(cAbs), activeColumn: null, routes: [], state: before };
+    return { arrows: restingArrows(before), disks: before.map(cAbs), activeColumn: null, routes: [], state: before, travel: 0, marksOpacity: 0 };
   }
 
   const column = c[active.index];
@@ -205,20 +221,23 @@ export function stageFrame(start: QState, c: Circuit, t: number): StageFrame {
   const routes = new Map<string, [number, number]>();
   for (const part of parts) if (part.from !== part.to) routes.set(`${part.from}-${part.to}`, [part.from, part.to]);
 
-  if (p < TRAVEL_END) {
-    const q = ease(p / TRAVEL_END);
+  const byDestination = new Map<number, { part: Contribution; k: number }[]>();
+  parts.forEach((part, k) => {
+    const list = byDestination.get(part.to) ?? [];
+    list.push({ part, k });
+    byDestination.set(part.to, list);
+  });
+  const interferes = [...byDestination.values()].some(group => group.length > 1);
+  const timing = interferes ? INTERFERE_TIMING : SLIDE_TIMING;
+  const q = clamp01((p - timing.travelStart) / (timing.travelEnd - timing.travelStart));
+
+  if (p < timing.travelEnd) {
     parts.forEach((part, k) =>
       arrows.push({ key: `part-${k}`, from: part.from, to: part.to, travel: q, offset: { re: 0, im: 0 }, value: inFlight(part, q), opacity: 1, kind: 'part' }),
     );
   } else {
-    const chain = ease(clamp01((p - TRAVEL_END) / (CHAIN_END - TRAVEL_END)));
-    const merge = ease(clamp01((p - CHAIN_END) / (1 - CHAIN_END)));
-    const byDestination = new Map<number, { part: Contribution; k: number }[]>();
-    parts.forEach((part, k) => {
-      const list = byDestination.get(part.to) ?? [];
-      list.push({ part, k });
-      byDestination.set(part.to, list);
-    });
+    const chain = ease(clamp01((p - timing.travelEnd) / Math.max(1e-9, timing.chainEnd - timing.travelEnd)));
+    const merge = ease(clamp01((p - timing.chainEnd) / Math.max(1e-9, timing.mergeEnd - timing.chainEnd)));
 
     for (const [to, group] of byDestination) {
       if (group.length === 1) {
@@ -238,12 +257,15 @@ export function stageFrame(start: QState, c: Circuit, t: number): StageFrame {
     }
   }
 
-  const blend = ease(clamp01(p / CHAIN_END));
+  const blend = ease(clamp01((p - timing.travelStart) / (timing.chainEnd - timing.travelStart)));
+  const marksOpacity = Math.min(clamp01(p / timing.travelStart), clamp01(1 - (p - timing.travelEnd) / MARKS_FADE));
   return {
     arrows,
     disks: before.map((a, v) => lerp(cAbs(a), cAbs(after[v]), blend)),
     activeColumn: active.index,
     routes: [...routes.values()],
     state: before,
+    travel: q,
+    marksOpacity,
   };
 }
