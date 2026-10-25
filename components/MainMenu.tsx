@@ -1,0 +1,89 @@
+import React from 'react';
+import { GameState } from '../types';
+import { Play, Box, Settings, LogOut, Database, Activity } from 'lucide-react';
+
+interface MainMenuProps {
+  onNavigate: (state: GameState) => void;
+}
+
+const MenuButton: React.FC<{ 
+  label: string; 
+  icon: React.ReactNode; 
+  onClick: () => void;
+  variant?: 'primary' | 'secondary' | 'danger';
+}> = ({ label, icon, onClick, variant = 'primary' }) => {
+  
+  const baseStyles = "group relative w-full md:w-80 h-14 flex items-center px-6 mb-4 border-l-4 transition-all duration-300 ease-out hover:translate-x-2 overflow-hidden clip-path-polygon";
+  
+  const variants = {
+    primary: "border-quantum-cyan bg-gradient-to-r from-quantum-cyan/10 to-transparent hover:from-quantum-cyan/20 hover:border-l-8 text-white hover:text-quantum-cyan",
+    secondary: "border-quantum-purple bg-gradient-to-r from-quantum-purple/10 to-transparent hover:from-quantum-purple/20 hover:border-l-8 text-gray-300 hover:text-quantum-purple",
+    danger: "border-red-500/50 bg-gradient-to-r from-red-500/5 to-transparent hover:from-red-500/10 hover:border-l-8 text-gray-400 hover:text-red-400",
+  };
+
+  return (
+    <button onClick={onClick} className={`${baseStyles} ${variants[variant]}`}>
+      <span className="mr-4 transition-transform duration-300 group-hover:scale-110">{icon}</span>
+      <span className="font-orbitron text-lg tracking-wider uppercase">{label}</span>
+      
+      {/* Hover Glow Effect */}
+      <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    </button>
+  );
+};
+
+const MainMenu: React.FC<MainMenuProps> = ({ onNavigate }) => {
+  return (
+    <div className="flex flex-col items-start justify-center h-full w-full p-8 md:pl-24 z-10 relative animate-in fade-in duration-700 slide-in-from-left-10">
+      
+      {/* Logo Area */}
+      <div className="mb-12">
+        <div className="flex items-center gap-3 mb-2">
+          <Activity className="text-quantum-magenta" size={32} />
+          <span className="text-quantum-cyan text-sm font-rajdhani tracking-[0.3em] uppercase">System Online v2.5.0</span>
+        </div>
+        <h1 className="text-6xl md:text-8xl font-orbitron font-black text-white leading-none tracking-tighter drop-shadow-[0_0_15px_rgba(76,201,240,0.5)]">
+          QUANTUM<br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-quantum-purple to-quantum-magenta">ODYSSEY</span>
+        </h1>
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex flex-col gap-2">
+        <MenuButton 
+          label="Campaign" 
+          icon={<Play size={24} />} 
+          onClick={() => onNavigate(GameState.CAMPAIGN)} 
+        />
+        <MenuButton 
+          label="Sandbox" 
+          icon={<Box size={24} />} 
+          onClick={() => onNavigate(GameState.SANDBOX)} 
+          variant="secondary"
+        />
+        <MenuButton 
+          label="Archives" 
+          icon={<Database size={24} />} 
+          onClick={() => onNavigate(GameState.ARCHIVES)} 
+          variant="secondary"
+        />
+        <MenuButton 
+          label="Settings" 
+          icon={<Settings size={24} />} 
+          onClick={() => onNavigate(GameState.SETTINGS)} 
+          variant="secondary"
+        />
+        <div className="h-8" /> {/* Spacer */}
+        <MenuButton 
+          label="Quit System" 
+          icon={<LogOut size={24} />} 
+          onClick={() => onNavigate(GameState.QUIT)} 
+          variant="danger"
+        />
+      </div>
+
+    </div>
+  );
+};
+
+export default MainMenu;
