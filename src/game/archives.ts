@@ -252,11 +252,11 @@ export const ARCHIVE_DATA: ArchiveEntry[] = [
   },
   {
     id: '004',
-    title: 'Project Odyssey',
+    title: 'Project Hypercube',
     category: 'LORE',
     description: 'CLASSIFIED: Origins of the simulation.',
     content:
-      'Project Odyssey was initiated in 2042 following the Great Silicon Collapse. The goal: create a human-quantum interface capable of stabilizing high-coherence qubit arrays via direct neural link.',
+      'Project Hypercube was initiated in 2042 following the Great Silicon Collapse. The goal: create a human-quantum interface capable of stabilizing high-coherence qubit arrays via direct neural link.',
     icon: Database,
     unlockedBy: 'q5',
   },

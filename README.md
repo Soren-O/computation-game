@@ -1,4 +1,4 @@
-# Quantum Odyssey (computation game)
+# Computation Game
 
 A puzzle game about bits and qubits, where every basis state is a circle on the corners of one
 hypercube: a line of two circles for one bit, a square for two, a cube for three. The shape
@@ -42,3 +42,7 @@ reference solution solves it). `npm run build` typechecks and builds into `dist/
 - `src/components/level/`: the stage, the circuit editor and the transport controls.
 
 Fonts (Orbitron, Geist, Geist Mono) are bundled from Fontsource under the SIL Open Font License.
+
+## License
+
+MIT. See [LICENSE](LICENSE): use, copy, change and build on it freely.

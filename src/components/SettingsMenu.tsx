@@ -217,7 +217,12 @@ const PatchNotesPanel = () => (
   <div className="animate-in slide-in-from-right-4 fade-in duration-300">
     <Header title="System Updates" subtitle="Changelog of recent quantum stability patches." />
     <div className="mt-6 space-y-6">
-      <PatchItem version={`v${APP_VERSION}`} date="2026-10-25" current>
+      <PatchItem version={`v${APP_VERSION}`} date="2026-10-28" current>
+        <ul className="list-disc list-inside space-y-2 text-gray-400">
+          <li>Renamed to Computation Game, and released under the MIT license.</li>
+        </ul>
+      </PatchItem>
+      <PatchItem version="v3.2.0" date="2026-10-25">
         <ul className="list-disc list-inside space-y-2 text-gray-400">
           <li>Tesseract Lab: four qubits on one tesseract in its most symmetric view, two octagons where every qubit is one direction of the same length. It runs a circuit with every kind of gate; edit it freely. A VIEW button switches to the cube inside a cube.</li>
           <li>Gate marks move with the amplitude: chevrons ride the walkway at the same speed as the arrows, turn arrows turn exactly as far as the amplitude does, and everything stops when you pause. A gate's motion now fills most of its step instead of a quick burst.</li>

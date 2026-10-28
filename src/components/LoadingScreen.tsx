@@ -51,7 +51,7 @@ const LoadingScreen = ({ onComplete }: LoadingScreenProps) => {
       </div>
 
       <h1 className="text-3xl md:text-4xl text-center font-orbitron font-bold tracking-widest text-transparent bg-clip-text bg-linear-to-r from-quantum-cyan to-quantum-magenta mb-8 animate-pulse">
-        QUANTUM ODYSSEY
+        COMPUTATION GAME
       </h1>
 
       <div

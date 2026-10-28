@@ -43,9 +43,9 @@ const MainMenu = ({ onNavigate }: MainMenuProps) => {
           <Activity className="text-quantum-magenta" size={32} />
           <span className="text-quantum-cyan text-sm tracking-[0.3em] uppercase">System Online v{APP_VERSION}</span>
         </div>
-        <h1 className="text-6xl md:text-8xl [@media(max-height:720px)]:text-5xl font-orbitron font-black text-white leading-none tracking-tighter drop-shadow-[0_0_15px_rgba(76,201,240,0.5)]">
-          QUANTUM<br />
-          <span className="text-transparent bg-clip-text bg-linear-to-r from-quantum-purple to-quantum-magenta">ODYSSEY</span>
+        <h1 className="text-4xl sm:text-6xl md:text-7xl [@media(max-height:720px)]:md:text-6xl font-orbitron font-black text-white leading-none tracking-tighter drop-shadow-[0_0_15px_rgba(76,201,240,0.5)]">
+          COMPUTATION<br />
+          <span className="text-transparent bg-clip-text bg-linear-to-r from-quantum-purple to-quantum-magenta">GAME</span>
         </h1>
       </div>
 
