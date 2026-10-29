@@ -14,6 +14,10 @@ Every amplitude is an arrow: the complex number itself, drawn in the complex pla
 up = +i), with the filled disk's area as the probability. When a gate sends pieces of amplitude
 to the same corner they add head-to-tail, so interference is something you watch happen.
 
+![H on the first qubit and on the second, each caught halfway: the same picture turned 90 degrees](docs/h-on-q0-vs-q1.png)
+
+![Four qubits in the Sandbox, halfway through an H on q2: every edge in that one direction gets a walkway](docs/sandbox-four-qubits.png)
+
 Play it at **https://soren-o.github.io/computation-game/**
 
 Still in development. It started as a Google AI Studio export; the first commit is that export.
