@@ -219,6 +219,12 @@ const PatchNotesPanel = () => (
     <div className="mt-6 space-y-6">
       <PatchItem version={`v${APP_VERSION}`} date="2026-10-28" current>
         <ul className="list-disc list-inside space-y-2 text-gray-400">
+          <li>The Sandbox goes from one to four qubits, so the Tesseract Lab is folded into it. At four, the VIEW button switches between the symmetric drawing and the cube inside a cube.</li>
+          <li>Gate tiles are bigger, and each carries a small picture of what the gate does, in the stage's own language: a walkway where amplitude moves, a dial where it turns in place (the wedge shows how far), a spinner on the walkway for Y, the lit side for a control, and the exchanged diagonal for SWAP.</li>
+        </ul>
+      </PatchItem>
+      <PatchItem version="v3.2.1" date="2026-10-28">
+        <ul className="list-disc list-inside space-y-2 text-gray-400">
           <li>Renamed to Computation Game, and released under the MIT license.</li>
         </ul>
       </PatchItem>

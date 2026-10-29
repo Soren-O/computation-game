@@ -6,9 +6,9 @@ itself never moves; what changes in time is what's on it. Each wire of the circu
 direction of the shape, and a gate on that wire moves amplitude along that direction, so it
 looks like a circle sliding to the other circle, a line sliding onto the opposite line, or a
 square sliding onto the opposite square. The campaign stops at three qubits for now; the
-Tesseract Lab is a free-play level with four, drawn flat in the tesseract's most symmetric view
-(two octagons, each qubit one direction of the same length), with a circuit that runs every kind
-of gate.
+Sandbox goes up to four, drawn flat in the tesseract's most symmetric view (two octagons, each
+qubit one direction of the same length). Every gate tile carries a small picture of what the gate
+does, in the same language as the stage.
 
 Every amplitude is an arrow: the complex number itself, drawn in the complex plane (right = +1,
 up = +i), with the filled disk's area as the probability. When a gate sends pieces of amplitude
@@ -33,7 +33,7 @@ reference solution solves it). `npm run build` typechecks and builds into `dist/
 
 ## Where things are
 
-- `src/game/quantum.ts`: state-vector simulator (any qubit count; the game uses up to 3), gates, circuit columns.
+- `src/game/quantum.ts`: state-vector simulator (any qubit count; the game uses up to 4), gates, circuit columns.
 - `src/game/animation.ts`: how arrows travel, line up head-to-tail and merge during a gate.
 - `src/game/hypercube.ts`: corner positions, rotation and perspective.
 - `src/game/levels.ts`: the campaign. Puzzles are data; circuits use a one-character-per-wire

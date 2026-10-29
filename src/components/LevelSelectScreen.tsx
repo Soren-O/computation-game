@@ -201,7 +201,7 @@ const LevelSelectScreen = ({ onReturn, onStartLevel }: LevelSelectScreenProps) =
                     </div>
                     <div className="flex items-center justify-between text-sm text-gray-400 border-b border-white/5 pb-2">
                       <span>Puzzles</span>
-                      <span className="text-white font-mono">{selectedLevel.freePlay ? 'Free play' : selectedLevel.puzzles.length}</span>
+                      <span className="text-white font-mono">{selectedLevel.puzzles.length}</span>
                     </div>
                     <div className="flex items-center justify-between gap-4 text-sm text-gray-400 border-b border-white/5 pb-2">
                       <span>Gates</span>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ChevronDown, ChevronUp, CircleCheck, Construction, MessageSquare, Move3d, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Box, ChevronDown, ChevronUp, CircleCheck, Construction, MessageSquare, Move3d, Octagon, RotateCcw } from 'lucide-react';
 import ArchivesScreen from './ArchivesScreen';
 import HypercubeStage from './level/HypercubeStage';
 import CircuitPanel, { type CaseTab, type Hand } from './level/CircuitPanel';
@@ -11,7 +11,6 @@ import {
   ALL_CELLS,
   applyCircuit,
   basisState,
-  circuit as buildCircuit,
   emptyCircuit,
   formatState,
   indexToBits,
@@ -69,11 +68,7 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
   const puzzle = level.puzzles[puzzleIndex];
   const [freeQubits, setFreeQubits] = useState(freePlay?.qubits ?? 1);
   const qubits = isFreePlay ? freeQubits : puzzle.qubits;
-  const [circuit, setCircuit] = useState<Circuit>(() => {
-    if (!freePlay) return emptyCircuit(qubits, puzzle.columns);
-    const preset = buildCircuit(...(freePlay.circuit ?? []));
-    return [...preset, ...emptyCircuit(qubits, Math.max(0, freePlay.columns - preset.length))];
-  });
+  const [circuit, setCircuit] = useState<Circuit>(() => emptyCircuit(qubits, freePlay?.columns ?? puzzle.columns));
   const [caseIndex, setCaseIndex] = useState(0);
   const [caseResults, setCaseResults] = useState<(boolean | null)[]>([]);
   const [mode, setMode] = useState<SystemMode>(isFreePlay ? 'SANDBOX' : 'PUZZLE');
@@ -491,9 +486,12 @@ const LevelSession = ({ level, onExit }: { level: LevelDef; onExit: () => void }
                     setView(defaultView(qubits));
                   }}
                   title="Switch between the symmetric drawing and the cube inside a cube"
-                  className="rounded-lg border border-white/15 bg-black/60 px-2.5 py-1.5 font-orbitron text-[10px] tracking-wider text-gray-300 backdrop-blur hover:text-white"
+                  aria-label={`View: ${tesseractStyle === 'symmetric' ? 'symmetric' : 'cube in cube'}`}
+                  className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-black/60 p-1.5 font-orbitron text-[10px] tracking-wider text-gray-300 backdrop-blur hover:text-white sm:px-2.5"
                 >
-                  VIEW: {tesseractStyle === 'symmetric' ? 'SYMMETRIC' : 'CUBE IN CUBE'}
+                  {tesseractStyle === 'symmetric' ? <Octagon size={14} /> : <Box size={14} />}
+                  {/* On phones the label would cover the top corners of the tesseract. */}
+                  <span className="hidden sm:inline">VIEW: {tesseractStyle === 'symmetric' ? 'SYMMETRIC' : 'CUBE IN CUBE'}</span>
                 </button>
               )}
             </div>

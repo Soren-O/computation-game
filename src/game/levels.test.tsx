@@ -1,11 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { applyCircuit, columnStatus, norm, numQubits, parseColumn, statesMatch } from './quantum';
+import { applyCircuit, columnStatus, norm, numQubits, statesMatch } from './quantum';
 import { CONNECTIONS, LEVELS, getLevel, isLevelBuilt } from './levels';
 import { TUTORIALS } from './tutorials';
 import { ARCHIVE_DATA } from './archives';
 
-const puzzles = LEVELS.filter(l => !l.freePlay).flatMap(level => level.puzzles.map((p, i) => ({ name: `${level.id} #${i + 1}`, level, p })));
+const puzzles = LEVELS.flatMap(level => level.puzzles.map((p, i) => ({ name: `${level.id} #${i + 1}`, level, p })));
 
 describe('campaign puzzles', () => {
   it.each(puzzles)('$name: its reference solution fits the puzzle', ({ p }) => {
@@ -32,17 +32,6 @@ describe('campaign puzzles', () => {
       expect(norm(target)).toBeCloseTo(1, 9);
     }
     expect(p.cases.every(({ start, target }) => statesMatch(start, target, p.upToGlobalPhase))).toBe(false);
-  });
-
-  it('preloads free-play circuits that fit their level', () => {
-    for (const level of LEVELS.filter(l => l.freePlay)) {
-      const { circuit: spec = [], qubits, columns } = level.freePlay!;
-      expect(spec.length).toBeLessThanOrEqual(columns);
-      for (const column of spec) {
-        expect(column).toHaveLength(qubits);
-        expect(columnStatus(parseColumn(column))).not.toBe('unpaired-swap');
-      }
-    }
   });
 
   it('only uses the bit visual where every gate keeps a single ball (no superposition or phases)', () => {
@@ -90,7 +79,6 @@ describe('tutorials', () => {
     expect(puzzleOrder).toEqual([...puzzleOrder].sort((a, b) => a - b));
     expect(new Set(puzzleOrder)).toEqual(new Set(level!.puzzles.map((_, i) => i)));
     // The last step of each puzzle must wait for the solve, or the player could get stuck.
-    if (level!.freePlay) return;
     level!.puzzles.forEach((_, i) => {
       const last = steps.filter(s => s.puzzle === i).at(-1)!;
       expect(last.awaitsSolve).toBe(true);

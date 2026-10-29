@@ -19,14 +19,12 @@ export interface Puzzle {
 
 export type LevelType = 'ROOT' | 'CLASSICAL' | 'QUANTUM';
 
-/** A level without goals: every gate, a resizable timeline, and an optional preloaded circuit. */
+/** A level without goals: every gate and a resizable timeline. */
 export interface FreePlay {
   qubits: number;
   minQubits: number;
   maxQubits: number;
   columns: number;
-  /** Preloaded circuit in the one-character-per-wire notation. */
-  circuit?: string[];
 }
 
 export interface LevelDef {
@@ -216,22 +214,6 @@ export const LEVELS: LevelDef[] = [
       { qubits: 3, cases: one(ket('000'), uniform(3, parity)), columns: 2, gates: ['H', 'X', 'Z'], solution: circuit('HHH', 'ZZZ') },
     ],
   },
-  {
-    id: 'lab4', x: 80, y: 13,
-    title: 'Tesseract Lab',
-    type: 'QUANTUM',
-    description: 'Four qubits on one tesseract, drawn in its most symmetric view. No goals: a circuit that runs every kind of gate, to watch and to edit.',
-    difficulty: 1,
-    visual: 'qubit',
-    puzzles: [freePuzzle(4, MAX_COLUMNS)],
-    freePlay: {
-      qubits: 4,
-      minQubits: 4,
-      maxQubits: 4,
-      columns: MAX_COLUMNS,
-      circuit: ['X...', '.H..', '..Y.', '...H', '.Z..', '..S.', '...T', '@X..', '@.@X', '#..#', '.s.t', 'HHHH'],
-    },
-  },
 ];
 
 /** Campaign map edges: [prerequisite, unlocks]. A level needs every prerequisite; levels with none are open from the start. */
@@ -253,11 +235,11 @@ const SANDBOX_LEVEL: LevelDef = {
   id: SANDBOX_LEVEL_ID, x: 0, y: 0,
   title: 'Sandbox',
   type: 'QUANTUM',
-  description: 'Free play with every gate, on up to three qubits.',
+  description: 'Free play with every gate, on one to four qubits.',
   difficulty: 1,
   visual: 'qubit',
   puzzles: [freePuzzle(2, 6)],
-  freePlay: { qubits: 2, minQubits: 1, maxQubits: 3, columns: 6 },
+  freePlay: { qubits: 2, minQubits: 1, maxQubits: 4, columns: 6 },
 };
 
 export function getLevel(id: string): LevelDef | undefined {

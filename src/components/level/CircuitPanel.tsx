@@ -4,11 +4,15 @@ import { QUBIT_COLORS } from '../../game/hypercube';
 import { columnStatus, type CellId, type Circuit } from '../../game/quantum';
 import type { LoopRange } from '../../game/tutorials';
 import { CELL_INFO, cellLabel } from './cells';
+import GateGlyph from './GateGlyph';
 
 const LABEL_W = 42;
-const UNIT = 52;
-const ROW = 42;
-const CELL = 36;
+const UNIT = 58;
+const ROW = 52;
+const CELL = 46;
+/** Four wires take a lot of height, so their rows are tighter. */
+const ROW_COMPACT = 44;
+const CELL_COMPACT = 40;
 const RULER_H = 24;
 
 export interface Hand {
@@ -62,25 +66,35 @@ function snapLoop(start: number, end: number, duration: number): [number, number
   return [s, e];
 }
 
+/** The gate's symbol on top, and below it a small picture of what it does. */
 export function GateTile({ cell, classical, size = CELL }: { cell: CellId; classical: boolean; size?: number }) {
   const info = CELL_INFO[cell];
-  if (cell === 'CTRL') return <span className="block rounded-full bg-slate-100 shadow-[0_0_10px_rgba(255,255,255,0.6)]" style={{ width: size * 0.34, height: size * 0.34 }} />;
-  if (cell === 'SWAP') return <XIcon size={size * 0.62} strokeWidth={3} className="text-slate-100 drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]" />;
   const label = cellLabel(cell, classical);
+  const symbolSize = size * 0.32;
   return (
     <span
-      className="flex items-center justify-center rounded-lg border font-mono font-bold"
+      className="flex flex-col items-center justify-center rounded-lg border font-mono font-bold"
       style={{
         width: size,
         height: size,
+        gap: size * 0.06,
+        paddingTop: size * 0.04,
         color: info.color,
         borderColor: `${info.color}99`,
-        background: `linear-gradient(160deg, ${info.color}2e, #0b0b1acc 70%)`,
+        background: `linear-gradient(160deg, ${info.color}2e, #0b0b1aee 70%)`,
         boxShadow: `0 0 14px ${info.color}33, inset 0 1px 0 ${info.color}40`,
-        fontSize: label.length > 2 ? size * 0.3 : size * 0.42,
       }}
     >
-      {label}
+      <span className="flex items-center justify-center leading-none" style={{ height: symbolSize, fontSize: label.length > 2 ? size * 0.26 : symbolSize }}>
+        {cell === 'CTRL' ? (
+          <span className="block rounded-full bg-slate-100 shadow-[0_0_8px_rgba(255,255,255,0.6)]" style={{ width: symbolSize * 0.62, height: symbolSize * 0.62 }} />
+        ) : cell === 'SWAP' ? (
+          <XIcon size={symbolSize * 1.05} strokeWidth={3} />
+        ) : (
+          label
+        )}
+      </span>
+      <GateGlyph cell={cell} color={info.color} width={size * 0.88} />
     </span>
   );
 }
@@ -94,6 +108,8 @@ const CircuitPanel = ({
   const [draftLoop, setDraftLoop] = useState<[number, number] | null>(null);
   const draftRef = useRef<[number, number] | null>(null);
   const columns = circuit.length;
+  const row = qubits >= 4 ? ROW_COMPACT : ROW;
+  const cellSize = qubits >= 4 ? CELL_COMPACT : CELL;
   const width = LABEL_W + duration * UNIT + 8;
   const xOf = (t: number) => LABEL_W + t * UNIT;
 
@@ -193,11 +209,11 @@ const CircuitPanel = ({
               title={`${CELL_INFO[cell].name}: ${CELL_INFO[cell].description} (right-click for more)`}
               aria-label={CELL_INFO[cell].name}
               aria-pressed={selected}
-              className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all ${
+              className={`flex h-12 w-12 items-center justify-center rounded-xl border transition-all ${
                 selected ? 'border-quantum-cyan bg-quantum-cyan/15 shadow-[0_0_14px_rgba(76,201,240,0.35)]' : 'border-transparent hover:border-white/15 hover:bg-white/5'
               }`}
             >
-              <GateTile cell={cell} classical={classical} size={classical && cell === 'X' ? 36 : 30} />
+              <GateTile cell={cell} classical={classical} size={42} />
             </button>
           );
         })}
@@ -248,7 +264,7 @@ const CircuitPanel = ({
 
       {/* Timeline + wires */}
       <div className="overflow-x-auto pb-1">
-        <div ref={gridRef} className="relative mx-auto select-none" style={{ width, height: RULER_H + qubits * ROW }}>
+        <div ref={gridRef} className="relative mx-auto select-none" style={{ width, height: RULER_H + qubits * row }}>
           {/* Ruler */}
           <div className="absolute left-0 right-0 top-0 cursor-ew-resize touch-none" style={{ height: RULER_H }} onPointerDown={startScrub('TIME')}>
             {Array.from({ length: duration + 1 }, (_, t) => (
@@ -270,7 +286,7 @@ const CircuitPanel = ({
 
           {/* Wires */}
           {Array.from({ length: qubits }, (_, q) => {
-            const y = RULER_H + q * ROW + ROW / 2;
+            const y = RULER_H + q * row + row / 2;
             return (
               <div key={q}>
                 <div className="absolute h-0.5 rounded-full" style={{ left: LABEL_W - 4, width: width - LABEL_W, top: y - 1, background: `linear-gradient(90deg, ${QUBIT_COLORS[q]}99, ${QUBIT_COLORS[q]}33)` }} />
@@ -292,13 +308,13 @@ const CircuitPanel = ({
               <div key={k}>
                 <div
                   className={`absolute rounded-lg transition-colors ${isActive ? 'bg-white/[0.07] ring-1 ring-white/20' : status === 'unpaired-swap' ? 'bg-red-500/10 ring-1 ring-red-500/40' : ''}`}
-                  style={{ left: x + 3, width: UNIT - 6, top: RULER_H + 2, height: qubits * ROW - 4 }}
+                  style={{ left: x + 3, width: UNIT - 6, top: RULER_H + 2, height: qubits * row - 4 }}
                   title={status === 'unpaired-swap' ? 'SWAP needs exactly two wires in the same column' : undefined}
                 />
                 {linked && (
                   <div
                     className="absolute w-0.5 bg-slate-200/80 shadow-[0_0_6px_rgba(255,255,255,0.5)]"
-                    style={{ left: x + UNIT / 2 - 1, top: RULER_H + Math.min(...participants) * ROW + ROW / 2, height: (Math.max(...participants) - Math.min(...participants)) * ROW }}
+                    style={{ left: x + UNIT / 2 - 1, top: RULER_H + Math.min(...participants) * row + row / 2, height: (Math.max(...participants) - Math.min(...participants)) * row }}
                   />
                 )}
                 {column.map((cell, q) => (
@@ -314,11 +330,11 @@ const CircuitPanel = ({
                     className={`group absolute flex items-center justify-center rounded-lg ${
                       cell ? 'cursor-grab' : hand ? 'cursor-pointer border border-dashed border-quantum-cyan/40 hover:bg-quantum-cyan/10' : 'border border-dashed border-white/[0.07] hover:border-white/20'
                     }`}
-                    style={{ left: x + (UNIT - CELL) / 2, top: RULER_H + q * ROW + (ROW - CELL) / 2, width: CELL, height: CELL }}
+                    style={{ left: x + (UNIT - cellSize) / 2, top: RULER_H + q * row + (row - cellSize) / 2, width: cellSize, height: cellSize }}
                   >
                     {cell && (
                       <div draggable onDragStart={e => dragFromCell(e, cell, k, q)} className="flex items-center justify-center">
-                        <GateTile cell={cell} classical={classical} />
+                        <GateTile cell={cell} classical={classical} size={cellSize} />
                       </div>
                     )}
                   </div>
@@ -328,7 +344,7 @@ const CircuitPanel = ({
           })}
 
           {/* Playhead */}
-          <div className="pointer-events-none absolute w-0.5 bg-yellow-300 shadow-[0_0_8px_rgba(253,224,71,0.8)]" style={{ left: xOf(Math.min(time, duration)) - 1, top: 6, height: RULER_H - 6 + qubits * ROW }} />
+          <div className="pointer-events-none absolute w-0.5 bg-yellow-300 shadow-[0_0_8px_rgba(253,224,71,0.8)]" style={{ left: xOf(Math.min(time, duration)) - 1, top: 6, height: RULER_H - 6 + qubits * row }} />
           <div
             className="absolute h-3 w-3 cursor-grab rounded-full bg-yellow-300 shadow-[0_0_8px_rgba(253,224,71,0.9)] touch-none"
             style={{ left: xOf(Math.min(time, duration)) - 6, top: 1 }}
